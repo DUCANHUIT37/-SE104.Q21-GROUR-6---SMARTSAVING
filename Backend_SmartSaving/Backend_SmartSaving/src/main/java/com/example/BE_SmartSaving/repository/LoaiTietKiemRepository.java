@@ -1,6 +1,6 @@
-package com.example.demo.repository;
+package com.example.BE_SmartSaving.repository;
 
-import com.example.demo.model.LoaiTietKiem;
+import com.example.BE_SmartSaving.model.LoaiTietKiem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

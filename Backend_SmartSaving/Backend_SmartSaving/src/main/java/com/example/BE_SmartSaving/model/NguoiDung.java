@@ -1,4 +1,4 @@
-package com.example.demo.model;
+package com.example.BE_SmartSaving.model;
 
 
 import jakarta.persistence.*;

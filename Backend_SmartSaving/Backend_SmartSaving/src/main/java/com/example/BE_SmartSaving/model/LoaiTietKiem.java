@@ -1,7 +1,9 @@
-package com.example.demo.model;
+package com.example.BE_SmartSaving.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -20,5 +22,6 @@ public class LoaiTietKiem {
     private Integer dangApDung; // 1 là đang dùng, 0 là vô hiệu
 
     @Column(updatable = false)
-    private LocalDateTime taoLuc = LocalDateTime.now();
+    @CreationTimestamp
+    private LocalDateTime taoLuc;
 }
