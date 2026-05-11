@@ -15,7 +15,7 @@ import java.time.LocalDate;
 public class PhieuGoiService {
 
     @Autowired
-    private PhieuGoiRepository phieuGoiRepository; // Đảm bảo em đã tạo file PhieuGoiRepository.java rồi nhé
+    private PhieuGoiRepository phieuGoiRepository;
 
     @Autowired
     private SoTietKiemRepository soTietKiemRepository;
@@ -32,17 +32,14 @@ public class PhieuGoiService {
             throw new RuntimeException("Sổ đã đóng, không thể gửi thêm tiền!");
         }
 
-        // Check luật tiền gửi thêm tối thiểu
         BigDecimal minGuiThem = thamSoService.laySoTienGuiThemToiThieu();
         if (soTienGoi.compareTo(minGuiThem) < 0) {
             throw new RuntimeException("Số tiền gửi thêm tối thiểu phải là " + minGuiThem + " VNĐ");
         }
 
-        // Cập nhật sổ (Cộng tiền)
         stk.setSoDuHienTai(stk.getSoDuHienTai().add(soTienGoi));
         soTietKiemRepository.save(stk);
 
-        // Tạo biên lai (Phiếu Gởi)
         PhieuGoi pg = new PhieuGoi();
         pg.setMaPhieu("PG" + System.currentTimeMillis());
         pg.setSoTietKiem(stk);

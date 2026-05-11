@@ -21,36 +21,31 @@ public class PhieuRutService {
     @Autowired
     private ThamSoService thamSoService;
 
-    @Transactional // Đảm bảo nếu lỗi thì không trừ tiền bậy bạ
+    @Transactional
     public PhieuRut thucHienRutTien(Integer soTietKiemId, BigDecimal soTienRut) {
         SoTietKiem stk = soTietKiemRepository.findById(soTietKiemId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sổ!"));
+                .orElseThrow(() -> new RuntimeException("Sổ không tồn tại!"));
 
-        // 1. Check điều kiện thời gian (Hỏi luật từ ThamSoService)
         long soNgayGui = ChronoUnit.DAYS.between(stk.getNgayMo(), LocalDate.now());
         if (soNgayGui < thamSoService.layThoiGianGuiToiThieu()) {
             throw new RuntimeException("Chưa đủ " + thamSoService.layThoiGianGuiToiThieu() + " ngày để rút!");
         }
 
-        // 2. Check số dư
         if (soTienRut.compareTo(stk.getSoDuHienTai()) > 0) {
-            throw new RuntimeException("Tiền trong sổ không đủ!");
+            throw new RuntimeException("Số dư không đủ!");
         }
 
-        // 3. Cập nhật sổ
         stk.setSoDuHienTai(stk.getSoDuHienTai().subtract(soTienRut));
         if (stk.getSoDuHienTai().compareTo(BigDecimal.ZERO) == 0) {
             stk.setTrangThai("da_tat_toan");
         }
         soTietKiemRepository.save(stk);
 
-        // 4. Tạo phiếu rút
-        PhieuRut phieu = new PhieuRut();
-        phieu.setMaPhieu("PR" + System.currentTimeMillis());
-        phieu.setSoTietKiem(stk);
-        phieu.setSoTienRut(soTienRut);
-        phieu.setNgayRut(LocalDate.now());
-
-        return phieuRutRepository.save(phieu);
+        PhieuRut pr = new PhieuRut();
+        pr.setMaPhieu("PR" + System.currentTimeMillis());
+        pr.setSoTietKiem(stk);
+        pr.setSoTienRut(soTienRut);
+        pr.setNgayRut(LocalDate.now());
+        return phieuRutRepository.save(pr);
     }
 }

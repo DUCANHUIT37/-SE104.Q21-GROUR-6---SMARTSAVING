@@ -14,15 +14,13 @@ public class SoTietKiemService {
     private SoTietKiemRepository soTietKiemRepository;
 
     @Autowired
-    private ThamSoService thamSoService; // Lấy luật từ đây
+    private ThamSoService thamSoService;
 
     public SoTietKiem moSoTietKiem(SoTietKiem soTietKiem) {
         BigDecimal minMoSo = thamSoService.laySoTienGuiToiThieu();
-
         if (soTietKiem.getSoTienBanDau().compareTo(minMoSo) < 0) {
             throw new RuntimeException("Số tiền gửi ban đầu tối thiểu phải là " + minMoSo + " VNĐ");
         }
-
         soTietKiem.setSoDuHienTai(soTietKiem.getSoTienBanDau());
         soTietKiem.setTrangThai("dang_hoat_dong");
         return soTietKiemRepository.save(soTietKiem);
@@ -35,5 +33,9 @@ public class SoTietKiemService {
     public SoTietKiem laySoTheoId(Integer id) {
         return soTietKiemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sổ tiết kiệm ID: " + id));
+    }
+
+    public void xoaSo(Integer id) {
+        soTietKiemRepository.deleteById(id);
     }
 }
