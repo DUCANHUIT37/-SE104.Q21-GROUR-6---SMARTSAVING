@@ -1,6 +1,8 @@
 package com.example.BE_SmartSaving.controller;
 
 import com.example.BE_SmartSaving.model.SoTietKiem;
+import com.example.BE_SmartSaving.service.PhieuGoiService;
+import com.example.BE_SmartSaving.service.PhieuRutService;
 import com.example.BE_SmartSaving.service.SoTietKiemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,36 +17,40 @@ public class SoTietKiemController {
     @Autowired
     private SoTietKiemService soTietKiemService;
 
-    @PostMapping("/mo-so")
-    public ResponseEntity<?> moSoTietKiem(@RequestBody SoTietKiem soTietKiem) {
-        try {
-            SoTietKiem soMoi = soTietKiemService.moSoTietKiem(soTietKiem);
-            return ResponseEntity.ok(soMoi);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+    @Autowired
+    private PhieuRutService phieuRutService;
 
-    @PutMapping("/gui-them/{id}")
-    public ResponseEntity<?> guiThemTien(@PathVariable Integer id, @RequestParam BigDecimal soTien) {
+    @Autowired
+    private PhieuGoiService phieuGoiService; // MỚI THÊM
+
+    @PostMapping("/mo-so")
+    public ResponseEntity<?> moSo(@RequestBody SoTietKiem soTietKiem) {
         try {
-            SoTietKiem soCapNhat = soTietKiemService.guiThemTien(id, soTien);
-            return ResponseEntity.ok(soCapNhat);
+            return ResponseEntity.ok(soTietKiemService.moSoTietKiem(soTietKiem));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @GetMapping
-    public ResponseEntity<?> layDanhSachSo() {
+    public ResponseEntity<?> layDanhSach() {
         return ResponseEntity.ok(soTietKiemService.layTatCaSo());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> layChiTietSo(@PathVariable Integer id) {
+    @PostMapping("/rut-tien/{id}")
+    public ResponseEntity<?> rutTien(@PathVariable Integer id, @RequestParam BigDecimal soTien) {
         try {
-            SoTietKiem soTietKiem = soTietKiemService.laySoTheoId(id);
-            return ResponseEntity.ok(soTietKiem);
+            return ResponseEntity.ok(phieuRutService.thucHienRutTien(id, soTien));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+
+    @PutMapping("/gui-them/{id}")
+    public ResponseEntity<?> guiThemTien(@PathVariable Integer id, @RequestParam BigDecimal soTien) {
+        try {
+            return ResponseEntity.ok(phieuGoiService.thucHienGuiTien(id, soTien));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
