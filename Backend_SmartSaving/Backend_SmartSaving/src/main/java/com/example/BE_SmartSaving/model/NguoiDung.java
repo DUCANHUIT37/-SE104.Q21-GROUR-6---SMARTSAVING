@@ -1,17 +1,16 @@
 package com.example.BE_SmartSaving.model;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
-@Entity // Đánh dấu đây là một bảng trong Database
-@Table(name = "NguoiDung") // Tên bảng phải khớp y chang trong MySQL
-@Data // Tự động tạo Getter, Setter (nhờ thư viện Lombok)
+@Entity
+@Table(name = "NguoiDung")
+@Data
 public class NguoiDung {
 
-    @Id // Đánh dấu đây là Khóa chính
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Tự động tăng ID
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = "ho_ten", nullable = false, length = 100)
@@ -20,15 +19,20 @@ public class NguoiDung {
     @Column(name = "cmnd", nullable = false, unique = true, length = 20)
     private String cmnd;
 
-    @Column(name = "dia_chi", nullable = false)
+    @Column(name = "dia_chi", nullable = false, length = 255)
     private String diaChi;
 
     @Column(name = "so_dien_thoai", length = 20)
     private String soDienThoai;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "loai_nguoi_dung", nullable = false)
-    private String loaiNguoiDung;
+    private LoaiNguoiDungEnum loaiNguoiDung = LoaiNguoiDungEnum.khach_hang;
 
-    @Column(name = "tao_luc", nullable = false, updatable = false)
+    @Column(name = "tao_luc", nullable = false)
     private LocalDateTime taoLuc = LocalDateTime.now();
+
+    public enum LoaiNguoiDungEnum {
+        khach_hang, giao_dich_vien, quan_tri_vien, giam_doc
+    }
 }

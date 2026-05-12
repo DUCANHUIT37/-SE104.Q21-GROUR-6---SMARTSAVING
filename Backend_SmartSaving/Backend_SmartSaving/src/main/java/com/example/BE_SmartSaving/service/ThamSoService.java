@@ -8,28 +8,44 @@ import java.math.BigDecimal;
 
 @Service
 public class ThamSoService {
+
     @Autowired
     private ThamSoRepository thamSoRepository;
 
-    // BỔ SUNG HÀM NÀY ĐỂ SOTIETKIEMSERVICE GỌI KHÔNG BỊ LỖI
+    // ─── Đọc tham số ────────────────────────────────────────────────────
+
     public BigDecimal laySoTienGuiToiThieu() {
-        return new BigDecimal(thamSoRepository.findByKhoa("so_tien_gui_toi_thieu")
-                .map(ts -> ts.getGiaTri()).orElse("1000000")); // Mặc định là 1 triệu nếu chưa có trong DB
-    }
-
-    public int layThoiGianGuiToiThieu() {
-        ThamSo ts = thamSoRepository.findByKhoa("thoi_gian_gui_toi_thieu_ngay")
-                .orElseThrow(() -> new RuntimeException("Chưa cài đặt luật thời gian rút!"));
-        return Integer.parseInt(ts.getGiaTri());
-    }
-
-    public double layLaiSuatKhongKyHan() {
-        // Sau này em có thể thêm luật lấy lãi suất từ bảng ThamSo ở đây
-        return 0.005;
+        return new BigDecimal(lay("so_tien_gui_toi_thieu", "1000000"));
     }
 
     public BigDecimal laySoTienGuiThemToiThieu() {
-        return new BigDecimal(thamSoRepository.findByKhoa("so_tien_gui_them_toi_thieu")
-                .map(ts -> ts.getGiaTri()).orElse("100000"));
+        return new BigDecimal(lay("so_tien_gui_them_toi_thieu", "100000"));
+    }
+
+    public int layThoiGianGuiToiThieu() {
+        return Integer.parseInt(lay("thoi_gian_gui_toi_thieu_ngay", "15"));
+    }
+
+    /** Lãi suất không kỳ hạn – lấy từ bảng LOAITIETKIEM, nhưng dùng fallback */
+    public double layLaiSuatKhongKyHan() {
+        return 0.005; // 0,5%/năm – được set qua LoaiTietKiemService
+    }
+
+    // ─── Tiện ích ────────────────────────────────────────────────────────
+
+    private String lay(String khoa, String macDinh) {
+        return thamSoRepository.findByKhoa(khoa)
+                .map(ThamSo::getGiaTri)
+                .orElse(macDinh);
+    }
+
+    /** Lấy toàn bộ tham số (dùng cho màn hình Cài Đặt) */
+    public java.util.List<ThamSo> layTatCaThamSo() {
+        return thamSoRepository.findAll();
+    }
+
+    public ThamSo layTheoKhoa(String khoa) {
+        return thamSoRepository.findByKhoa(khoa)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tham số: " + khoa));
     }
 }
