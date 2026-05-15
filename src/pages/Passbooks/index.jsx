@@ -1,29 +1,54 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { 
-  Search, Filter, PlusCircle, TrendingDown, TrendingUp, 
-  CheckCircle, XCircle, AlertCircle, Download, PiggyBank,
+  Search, PlusCircle, Download, PiggyBank,
   X, ArrowDownLeft, ArrowUpRight, Loader2, AlertTriangle,
-  ChevronUp, ChevronDown, ArrowUpDown
+  ChevronUp, ChevronDown, ArrowUpDown, RefreshCw, WifiOff
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { 
-  soTietKiemData, khachHangData, loaiTietKiemData, thamSoData, 
-  generateMaGiaoDich, tinhTienLai, soNgayGiua, lichSuGiaoDichData 
-} from '../../data/fakeDb';
+import { soTietKiemApi } from '../../services/api';
+import { thamSoData, generateMaGiaoDich, tinhTienLai, soNgayGiua, lichSuGiaoDichData, loaiTietKiemData } from '../../data/fakeDb';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 
-const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val) + ' ₫';
+const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val ?? 0) + ' ₫';
 const formatNgay = (str) => str ? new Date(str).toLocaleDateString('vi-VN') : '—';
+
+// Mapper: DTO từ Backend → format mà UI cần
+const mapDtoToUi = (dto) => ({
+  id: dto.id,
+  maSo: dto.maSo,
+  soDuHienTai: parseFloat(dto.soDuHienTai ?? 0),
+  soTienBanDau: parseFloat(dto.soTienBanDau ?? 0),
+  laiSuatMoSo: parseFloat(dto.laiSuatMoSo ?? 0) * 100, // Backend lưu 0.07 → hiển thị 7
+  ngayMo: dto.ngayMo,
+  ngayDaoHan: dto.ngayDaoHan,
+  trangThai: dto.trangThai,
+  // Flattened relations từ Backend DTO
+  khachHang: dto.khachHangId ? {
+    id: dto.khachHangId,
+    hoTen: dto.khachHangTen,
+    cmnd: dto.khachHangCmnd,
+  } : null,
+  loaiTietKiem: dto.loaiTietKiemId ? {
+    id: dto.loaiTietKiemId,
+    tenLoai: dto.loaiTietKiemTen,
+    kyHanThang: dto.kyHanThang ?? 0,
+  } : null,
+});
 
 export default function Passbooks() {
   const { isTeller } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [trangThaiFilter, setTrangThaiFilter] = useState('ALL');
-  
-  // Sorting State
+
+  // ─── API State ───────────────────────────────────────────────────────────────
+  const [danhSach, setDanhSach] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // ─── Sorting State ───────────────────────────────────────────────────────────
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   // Action Modal State
@@ -32,21 +57,36 @@ export default function Passbooks() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionError, setActionError] = useState('');
 
-  const enrichedList = useMemo(() => {
-    return soTietKiemData.map(so => ({
-      ...so,
-      khachHang: khachHangData.find(kh => kh.id === so.khachHangId),
-      loaiTietKiem: loaiTietKiemData.find(lt => lt.id === so.loaiTietKiemId),
-    }));
+  // ─── Fetch dữ liệu từ Backend ─────────────────────────────────────────────────
+  const fetchDanhSach = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await soTietKiemApi.layDanhSach();
+      const apiData = response.data?.data ?? [];
+      setDanhSach(apiData.map(mapDtoToUi));
+    } catch (err) {
+      console.error('Lỗi tải danh sách sổ:', err);
+      setError(
+        err.response?.data?.message ??
+        'Không thể kết nối đến Backend. Vui lòng kiểm tra server và thử lại.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    fetchDanhSach();
+  }, [fetchDanhSach]);
+
   const filtered = useMemo(() => {
-    return enrichedList.filter(so => {
+    return danhSach.filter(so => {
       const q = search.toLowerCase();
       const matchSearch =
-        so.maSo.toLowerCase().includes(q) ||
-        (so.khachHang?.hoTen || '').toLowerCase().includes(q) ||
-        (so.khachHang?.cmnd || '').includes(q);
+        (so.maSo ?? '').toLowerCase().includes(q) ||
+        (so.khachHang?.hoTen ?? '').toLowerCase().includes(q) ||
+        (so.khachHang?.cmnd ?? '').includes(q);
       
       let matchStatus = true;
       if (trangThaiFilter === 'DANG_HOAT_DONG') matchStatus = so.trangThai === 'dang_hoat_dong';
@@ -54,7 +94,7 @@ export default function Passbooks() {
       
       return matchSearch && matchStatus;
     });
-  }, [enrichedList, search, trangThaiFilter]);
+  }, [danhSach, search, trangThaiFilter]);
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -258,6 +298,32 @@ export default function Passbooks() {
 
   return (
     <div className="space-y-8">
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Đang tải danh sách sổ tiết kiệm...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {!isLoading && error && (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <WifiOff className="w-12 h-12 text-red-400" />
+          <p className="font-semibold text-gray-900 dark:text-white">Lỗi kết nối Backend</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md text-center">{error}</p>
+          <button
+            onClick={fetchDanhSach}
+            className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm transition-all"
+          >
+            <RefreshCw className="w-4 h-4" /> Thử lại
+          </button>
+        </div>
+      )}
+
+      {/* Main Content */}
+      {!isLoading && !error && (
+        <>
       {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -269,11 +335,18 @@ export default function Passbooks() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2">
-          <button 
+          <button
             onClick={handleExportCSV}
             className="inline-flex items-center justify-center px-4 py-2 border border-emerald-200 text-emerald-700 bg-white dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20 hover:bg-emerald-50 rounded-xl font-semibold text-sm transition-all"
           >
             <Download className="w-4 h-4 mr-2" /> Xuất Danh Sách
+          </button>
+          <button
+            onClick={fetchDanhSach}
+            title="Tải lại dữ liệu"
+            className="inline-flex items-center justify-center p-2 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+          >
+            <RefreshCw className="w-4 h-4" />
           </button>
           {isTeller() && (
             <Link 
@@ -398,7 +471,7 @@ export default function Passbooks() {
         {/* Pagination UI */}
         <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Hiển thị <span className="font-semibold text-gray-900 dark:text-white">{filtered.length}</span> / <span className="font-semibold text-gray-900 dark:text-white">{enrichedList.length}</span> sổ
+            Hiển thị <span className="font-semibold text-gray-900 dark:text-white">{filtered.length}</span> / <span className="font-semibold text-gray-900 dark:text-white">{danhSach.length}</span> sổ
           </p>
           <div className="flex items-center gap-2">
             <button className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700 disabled:opacity-50">
@@ -524,6 +597,8 @@ export default function Passbooks() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );
