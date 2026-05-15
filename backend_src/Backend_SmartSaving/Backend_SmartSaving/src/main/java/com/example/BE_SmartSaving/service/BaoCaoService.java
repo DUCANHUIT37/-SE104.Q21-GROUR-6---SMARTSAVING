@@ -108,7 +108,7 @@ public class BaoCaoService {
     // ─── TỔNG QUAN DASHBOARD ──────────────────────────────
     public com.example.BE_SmartSaving.dto.TongQuanDTO layTongQuan() {
         long tongSoTietKiem = soTietKiemRepository.count();
-        long tongKhachHang = nguoiDungRepository.findByLoaiNguoiDung(com.example.BE_SmartSaving.model.NguoiDung.LoaiNguoiDungEnum.ROLE_USER).size();
+        long tongKhachHang = nguoiDungRepository.findByLoaiNguoiDung(com.example.BE_SmartSaving.model.NguoiDung.LoaiNguoiDungEnum.khach_hang).size();
         BigDecimal tongSoDu = soTietKiemRepository.sumSoDuHienTai();
         
         LocalDate today = LocalDate.now();

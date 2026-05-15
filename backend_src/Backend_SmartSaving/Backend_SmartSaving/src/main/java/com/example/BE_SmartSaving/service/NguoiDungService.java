@@ -108,7 +108,7 @@ public class NguoiDungService {
     }
 
     public List<NguoiDungDTO> layKhachHang() {
-        return nguoiDungRepository.findByLoaiNguoiDung(NguoiDung.LoaiNguoiDungEnum.ROLE_USER)
+        return nguoiDungRepository.findByLoaiNguoiDung(NguoiDung.LoaiNguoiDungEnum.khach_hang)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
