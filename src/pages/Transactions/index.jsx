@@ -1,19 +1,33 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { History, Search, ArrowDownRight, ArrowUpRight, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { lichSuGiaoDichData, soTietKiemData } from '../../data/fakeDb';
+import { giaoDichApi } from '../../services/api';
 
-const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(Math.abs(val)) + ' ₫';
+const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(Math.abs(val || 0)) + ' ₫';
 const formatNgay = (str) => new Date(str).toLocaleString('vi-VN');
 
 export default function Transactions() {
   const [search, setSearch] = useState('');
   const [loaiFilter, setLoaiFilter] = useState('ALL');
+  const [giaoDichData, setGiaoDichData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGiaoDich = async () => {
+      try {
+        const res = await giaoDichApi.layTatCa();
+        setGiaoDichData(res.data.data);
+      } catch (error) {
+        console.error('Lỗi lấy danh sách giao dịch:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGiaoDich();
+  }, []);
 
   const enriched = useMemo(() => {
-    return lichSuGiaoDichData.map(gd => {
-      const so = soTietKiemData.find(s => s.id === gd.soTietKiemId);
-      // Map loai giao dich cua fakeDb sang loai cua Demo UI
+    return giaoDichData.map(gd => {
       let uiType = 'DEPOSIT';
       if (gd.loaiGiaoDich === 'tat_toan' || gd.loaiGiaoDich === 'rut_tien') {
         uiType = 'WITHDRAWAL';
@@ -21,17 +35,17 @@ export default function Transactions() {
       
       return { 
         ...gd, 
-        maSo: so?.maSo || '—', 
+        maSo: gd.soTietKiemMaSo || '—', 
         uiType 
       };
-    }).reverse();
-  }, []);
+    });
+  }, [giaoDichData]);
 
   const filtered = useMemo(() => enriched.filter(gd => {
     const q = search.toLowerCase();
     const matchSearch = 
       gd.maSo.toLowerCase().includes(q) || 
-      gd.maGiaoDich.toLowerCase().includes(q) ||
+      (gd.maGiaoDich || '').toLowerCase().includes(q) ||
       (gd.ghiChu || '').toLowerCase().includes(q);
     
     const matchLoai = loaiFilter === 'ALL' || gd.uiType === loaiFilter;
@@ -87,7 +101,14 @@ export default function Transactions() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800/60">
-              {filtered.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-500" />
+                    Đang tải dữ liệu...
+                  </td>
+                </tr>
+              ) : filtered.length > 0 ? (
                 filtered.map((t) => (
                   <tr key={t.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">
                     <td className="px-4 py-4 font-mono text-gray-500 dark:text-gray-500">

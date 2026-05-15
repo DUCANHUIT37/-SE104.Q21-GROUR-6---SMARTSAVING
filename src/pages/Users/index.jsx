@@ -1,31 +1,52 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { UserPlus, CheckCircle, XCircle, Shield } from 'lucide-react';
-import { taiKhoanData } from '../../data/fakeDb';
+import { UserPlus, CheckCircle, XCircle, Shield, Loader2 } from 'lucide-react';
+import { nguoiDungApi } from '../../services/api';
 import { cn } from '../../lib/utils';
 
 const ROLE_COLOR = { ADMIN: 'bg-rose-500/10 text-rose-400', TELLER: 'bg-sky-500/10 text-sky-400', USER: 'bg-gray-500/10 text-gray-400' };
 const ROLE_LABEL = { ADMIN: 'Quản trị viên', TELLER: 'Giao dịch viên', USER: 'Khách hàng' };
 
 export default function Users() {
-  const [users, setUsers] = useState([...taiKhoanData]);
+  const [users, setUsers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ email: '', hoTen: '', quyenHan: 'TELLER', kichHoat: true });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await nguoiDungApi.layTatCa();
+      setUsers(res.data.data || []);
+    } catch (error) {
+      toast.error('Lỗi tải danh sách người dùng');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleToggle = (id) => {
-    setUsers(arr => arr.map(u => u.id === id ? { ...u, kichHoat: !u.kichHoat } : u));
-    toast.success('Đã cập nhật trạng thái tài khoản');
+    // In reality, this would call an API like nguoiDungApi.toggleStatus(id)
+    toast.error('Chức năng đang được cập nhật (Cần API cập nhật trạng thái)');
   };
 
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault();
-    const newUser = { ...form, id: users.length + 1 };
-    setUsers(arr => [...arr, newUser]);
-    taiKhoanData.push(newUser);
-    toast.success(`Đã tạo tài khoản ${form.email}`);
-    setShowForm(false);
-    setForm({ email: '', hoTen: '', quyenHan: 'TELLER', kichHoat: true });
+    // In reality, this would call an API like nguoiDungApi.taoMoi({ ...form })
+    toast.error('Chức năng đang được cập nhật (Cần API tạo tài khoản nhân viên)');
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

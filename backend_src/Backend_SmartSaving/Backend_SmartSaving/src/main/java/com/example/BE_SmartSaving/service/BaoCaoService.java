@@ -27,9 +27,11 @@ public class BaoCaoService {
     private PhieuRutRepository phieuRutRepository;
     @Autowired
     private SoTietKiemRepository soTietKiemRepository;
+    @Autowired
+    private com.example.BE_SmartSaving.repository.NguoiDungRepository nguoiDungRepository;
 
     // ─── BM5.1: Báo Cáo Doanh Số Hoạt Động Ngày ────────────────────────
-
+    
     /**
      * Tổng hợp thu chi trong ngày, phân theo loại tiết kiệm.
      * TổngThu = tiền mở sổ mới + tiền gởi thêm trong ngày.
@@ -101,5 +103,24 @@ public class BaoCaoService {
             }
         }
         return danhSach;
+    }
+
+    // ─── TỔNG QUAN DASHBOARD ──────────────────────────────
+    public com.example.BE_SmartSaving.dto.TongQuanDTO layTongQuan() {
+        long tongSoTietKiem = soTietKiemRepository.count();
+        long tongKhachHang = nguoiDungRepository.findByLoaiNguoiDung(com.example.BE_SmartSaving.model.NguoiDung.LoaiNguoiDungEnum.ROLE_USER).size();
+        BigDecimal tongSoDu = soTietKiemRepository.sumSoDuHienTai();
+        
+        LocalDate today = LocalDate.now();
+        BigDecimal thuGoiThem = phieuGoiRepository.tinhTongThuGoiThemTrongNgay(today);
+        BigDecimal thuMoSo = phieuGoiRepository.tinhTongThuMoSoTrongNgay(today);
+        BigDecimal doanhThuHomNay = thuGoiThem.add(thuMoSo);
+        
+        return com.example.BE_SmartSaving.dto.TongQuanDTO.builder()
+                .tongKhachHang(tongKhachHang)
+                .tongSoTietKiem(tongSoTietKiem)
+                .tongSoDu(tongSoDu)
+                .doanhThuHomNay(doanhThuHomNay)
+                .build();
     }
 }

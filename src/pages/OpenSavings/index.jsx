@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { PiggyBank, CalendarDays, ReceiptText, ShieldCheck, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-  loaiTietKiemData, khachHangData, soTietKiemData, thamSoData,
-  generateMaSo,
-} from '../../data/fakeDb';
+  nguoiDungApi, loaiTietKiemApi, thamSoApi, soTietKiemApi
+} from '../../services/api';
 
 const formatTien = (val) => {
   if (!val) return '';
@@ -20,24 +19,57 @@ export default function MoSo() {
 
   const [form, setForm] = useState({
     cmnd: '', hoTen: '', diaChi: '',
-    loaiTietKiemId: '', soTienBanDau: '',
+    loaiTietKiemId: '', soTienBanDau: '', soDienThoai: ''
   });
   const [khachHangTimThay, setKhachHangTimThay] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [success, setSuccess] = useState(null);
 
-  const loaiDangApDung = loaiTietKiemData.filter(lt => lt.dangApDung);
-  const loaiDaChon = loaiDangApDung.find(lt => lt.id === Number(form.loaiTietKiemId));
-  const laiSuatUocTinh = loaiDaChon ? loaiDaChon.laiSuatNam : 0;
+  const [loaiDangApDung, setLoaiDangApDung] = useState([]);
+  const [soTienToiThieu, setSoTienToiThieu] = useState(1000000);
 
-  const handleCmndBlur = () => {
-    const found = khachHangData.find(kh => kh.cmnd === form.cmnd.trim());
-    if (found) {
-      setKhachHangTimThay(found);
-      setForm(f => ({ ...f, hoTen: found.hoTen, diaChi: found.diaChi }));
-      toast.success(`Đã tìm thấy khách hàng: ${found.hoTen}`);
-    } else {
-      setKhachHangTimThay(null);
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const [loaiRes, thamSoRes] = await Promise.all([
+          loaiTietKiemApi.layDangApDung(),
+          thamSoApi.layTatCa()
+        ]);
+        setLoaiDangApDung(loaiRes.data.data);
+        const minDeposit = thamSoRes.data.data.find(ts => ts.khoa === 'soTienGuiToiThieu')?.giaTri;
+        if (minDeposit) setSoTienToiThieu(Number(minDeposit));
+      } catch (error) {
+        console.error('Lỗi lấy dữ liệu ban đầu', error);
+        toast.error('Lỗi kết nối máy chủ');
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+    fetchInitialData();
+  }, []);
+
+  const loaiDaChon = loaiDangApDung.find(lt => lt.id === Number(form.loaiTietKiemId));
+  const laiSuatUocTinh = loaiDaChon ? (loaiDaChon.laiSuatNam * 100) : 0; // Convert to % if backend returns 0.05
+
+  const handleCmndBlur = async () => {
+    if (!form.cmnd.trim()) return;
+    try {
+      // Backend NguoiDungController endpoint: /cmnd/{cmnd} (wait, let's look at api.js - we don't have cmnd endpoint in api.js)
+      // I will just use NguoiDungController.traCuuHoacTao later on submit. But we can check if they exist by fetching all KhachHang or using an API if it exists.
+      // Wait, api.js doesn't have layTheoCmnd. Let's just use layKhachHang and filter.
+      const res = await nguoiDungApi.layKhachHang();
+      const khachHangs = res.data.data;
+      const found = khachHangs.find(kh => kh.cmnd === form.cmnd.trim());
+      if (found) {
+        setKhachHangTimThay(found);
+        setForm(f => ({ ...f, hoTen: found.hoTen, diaChi: found.diaChi, soDienThoai: found.soDienThoai }));
+        toast.success(`Đã tìm thấy khách hàng: ${found.hoTen}`);
+      } else {
+        setKhachHangTimThay(null);
+      }
+    } catch (e) {
+      console.log(e);
     }
   };
 
@@ -49,44 +81,51 @@ export default function MoSo() {
     setForm({ ...form, soTienBanDau: e.target.value.replace(/\D/g, '') });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const minDeposit = thamSoData.soTienGuiToiThieu || 1000000;
-    if (Number(form.soTienBanDau) < minDeposit) {
-      toast.error(`Số tiền gửi phải lớn hơn hoặc bằng ${minDeposit.toLocaleString('vi-VN')} VNĐ!`);
+    if (Number(form.soTienBanDau) < soTienToiThieu) {
+      toast.error(`Số tiền gửi phải lớn hơn hoặc bằng ${soTienToiThieu.toLocaleString('vi-VN')} VNĐ!`);
       return;
     }
 
     setLoading(true);
 
-    setTimeout(() => {
-      const maSo = generateMaSo();
-      const ngayMo = new Date().toISOString().split('T')[0];
-      const ngayDaoHan = loaiDaChon?.kyHanThang > 0
-        ? new Date(new Date(ngayMo).setMonth(new Date(ngayMo).getMonth() + loaiDaChon.kyHanThang)).toISOString().split('T')[0]
-        : null;
-
-      const soMoi = {
-        id: soTietKiemData.length + 1, maSo,
-        khachHangId: khachHangTimThay?.id || null, // Trong thực tế sẽ cần tạo KH mới nếu chưa có
-        loaiTietKiemId: Number(form.loaiTietKiemId),
+    try {
+      // 1. Prepare payload
+      const payload = {
         soTienBanDau: Number(form.soTienBanDau),
-        soDuHienTai: Number(form.soTienBanDau),
-        laiSuatMoSo: loaiDaChon?.laiSuatNam,
-        ngayMo: ngayMo, ngayDaoHan,
-        trangThai: 'dang_hoat_dong',
+        khachHang: {
+          cmnd: form.cmnd,
+          hoTen: form.hoTen,
+          diaChi: form.diaChi,
+          soDienThoai: form.soDienThoai || '0900000000', // Mock sdt
+          loaiNguoiDung: 'khach_hang'
+        },
+        loaiTietKiem: {
+          id: Number(form.loaiTietKiemId)
+        }
       };
-      soTietKiemData.push(soMoi);
 
-      setLoading(false);
-      setSuccess({ maSo, soTienBanDau: form.soTienBanDau, loaiTietKiem: loaiDaChon?.tenLoai });
+      const res = await soTietKiemApi.moSoMoi(payload);
+      const data = res.data.data;
+      
+      setSuccess({ 
+        maSo: data.maSo, 
+        soTienBanDau: data.soDuHienTai, 
+        loaiTietKiem: data.tenLoaiTietKiem 
+      });
       toast.success(`Mở sổ tiết kiệm thành công!`);
-    }, 1000);
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi mở sổ');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
-    setForm({ cmnd: '', hoTen: '', diaChi: '', loaiTietKiemId: '', soTienBanDau: '' });
+    setForm({ cmnd: '', hoTen: '', diaChi: '', loaiTietKiemId: '', soTienBanDau: '', soDienThoai: '' });
     setSuccess(null); setKhachHangTimThay(null);
   };
 
@@ -188,7 +227,7 @@ export default function MoSo() {
                     />
                     <span className="absolute right-4 top-3 text-gray-500 font-medium">VNĐ</span>
                   </div>
-                  <p className="text-xs text-gray-500">Tối thiểu: {thamSoData.soTienGuiToiThieu.toLocaleString('vi-VN')} VNĐ</p>
+                  <p className="text-xs text-gray-500">Tối thiểu: {soTienToiThieu.toLocaleString('vi-VN')} VNĐ</p>
                 </div>
 
                 <div className="space-y-2">

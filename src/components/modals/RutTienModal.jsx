@@ -1,17 +1,48 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { TrendingDown, XCircle, AlertTriangle } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import { loaiTietKiemData, thamSoData, soTietKiemData, lichSuGiaoDichData, generateMaGiaoDich, tinhTienLai, soNgayGiua } from '../../data/fakeDb';
+import toast from 'react-hot-toast';
+import { soTietKiemApi, thamSoApi, loaiTietKiemApi } from '../../services/api';
 import { Overlay, ModalHeader, InfoRow, ModalActions } from './GoiTienModal';
 
-const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val) + ' ₫';
+const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val || 0) + ' ₫';
+
+const soNgayGiua = (d1, d2) => {
+  const t1 = new Date(d1).getTime();
+  const t2 = new Date(d2).getTime();
+  return Math.floor(Math.abs(t2 - t1) / (1000 * 60 * 60 * 24));
+};
+
+const tinhTienLai = (soDu, laiSuatNam, soNgay) => {
+  return Math.floor((soDu * (laiSuatNam / 100) * soNgay) / 365);
+};
 
 export default function RutTienModal({ so, onClose, onSuccess }) {
-  const loai = loaiTietKiemData.find(lt => lt.id === so.loaiTietKiemId);
+  const [loai, setLoai] = useState(null);
+  const [soNgayGuiToiThieu, setSoNgayGuiToiThieu] = useState(15);
+  
   const [soTienRut, setSoTienRut] = useState(so.soDuHienTai);
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    const fetchDaTa = async () => {
+      try {
+        const [ltRes, tsRes] = await Promise.all([
+          loaiTietKiemApi.layTatCa(),
+          thamSoApi.layTatCa()
+        ]);
+        const lt = ltRes.data.data.find(l => l.id === so.loaiTietKiem.id);
+        setLoai(lt);
+        
+        const minDays = tsRes.data.data.find(ts => ts.khoa === 'soNgayGuiToiThieu')?.giaTri;
+        if (minDays) setSoNgayGuiToiThieu(Number(minDays));
+      } catch (error) {
+        toast.error("Lỗi lấy thông tin");
+      }
+    };
+    fetchDaTa();
+  }, [so]);
 
   const today = new Date().toISOString().split('T')[0];
   const ngayMo = so.ngayMo;
@@ -19,10 +50,11 @@ export default function RutTienModal({ so, onClose, onSuccess }) {
 
   // Kiểm tra điều kiện
   const kiemTra = useMemo(() => {
-    const isKKH = loai?.kyHanThang === 0;
+    if (!loai) return { ok: true, msg: '' };
+    const isKKH = loai.kyHanThang === 0;
     if (isKKH) {
-      if (soNgayDaGui < thamSoData.soNgayGuiToiThieu)
-        return { ok: false, msg: `Sổ không kỳ hạn phải gởi trên ${thamSoData.soNgayGuiToiThieu} ngày mới được rút. Hiện tại: ${soNgayDaGui} ngày.` };
+      if (soNgayDaGui < soNgayGuiToiThieu)
+        return { ok: false, msg: `Sổ không kỳ hạn phải gởi trên ${soNgayGuiToiThieu} ngày mới được rút. Hiện tại: ${soNgayDaGui} ngày.` };
       if (Number(soTienRut) > so.soDuHienTai)
         return { ok: false, msg: 'Số tiền rút không được vượt quá số dư hiện có.' };
     } else {
@@ -34,44 +66,34 @@ export default function RutTienModal({ so, onClose, onSuccess }) {
       }
     }
     return { ok: true, msg: '' };
-  }, [loai, soNgayDaGui, soTienRut, so, today]);
+  }, [loai, soNgayDaGui, soTienRut, so, today, soNgayGuiToiThieu]);
 
   // Tính lãi dự tính
   const tinhKetQua = useMemo(() => {
-    const isKKH = loai?.kyHanThang === 0;
+    if (!loai) return { laiSuatApDung: 0, tienLai: 0, tatToan: false, tongNhan: 0 };
+    const isKKH = loai.kyHanThang === 0;
     const isQuaHan = so.ngayDaoHan ? new Date(today) > new Date(so.ngayDaoHan) : true;
-    const laiSuatApDung = (!isKKH && !isQuaHan) ? 0.5 : (loai?.laiSuatNam || 0.5);
+    const laiSuatApDung = (!isKKH && !isQuaHan) ? 0.5 : (loai.laiSuatNam || 0.5);
     const tienLai = tinhTienLai(so.soDuHienTai, laiSuatApDung, soNgayDaGui);
     const tatToan = isKKH ? (Number(soTienRut) >= so.soDuHienTai) : true;
     return { laiSuatApDung, tienLai, tatToan, tongNhan: Number(soTienRut) + tienLai };
   }, [loai, so, soNgayDaGui, soTienRut, today]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!kiemTra.ok && !kiemTra.warn) { setErrorMsg(kiemTra.msg); return; }
     if (!confirmed && kiemTra.warn) { setConfirmed(true); return; }
+    
     setLoading(true);
-    setTimeout(() => {
-      const idx = soTietKiemData.findIndex(s => s.id === so.id);
-      if (idx !== -1) {
-        const soDuMoi = tinhKetQua.tatToan ? 0 : so.soDuHienTai - Number(soTienRut);
-        soTietKiemData[idx].soDuHienTai = soDuMoi;
-        if (soDuMoi === 0) soTietKiemData[idx].trangThai = 'da_tat_toan';
-      }
-      lichSuGiaoDichData.push({
-        id: lichSuGiaoDichData.length + 1,
-        maGiaoDich: generateMaGiaoDich('PR'),
-        soTietKiemId: so.id,
-        loaiGiaoDich: tinhKetQua.tatToan ? 'tat_toan' : 'rut_tien',
-        soTien: -Number(soTienRut),
-        soDuTruoc: so.soDuHienTai,
-        soDuSau: so.soDuHienTai - Number(soTienRut),
-        ghiChu: `Rút tiền, lãi: ${formatTien(tinhKetQua.tienLai)}`,
-        thoiGian: new Date().toISOString(),
-      });
-      setLoading(false);
+    try {
+      await soTietKiemApi.rutTien(so.id, Number(soTienRut));
+      toast.success('Rút tiền thành công!');
       onSuccess();
-    }, 800);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi rút tiền');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

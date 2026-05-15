@@ -34,10 +34,12 @@ public class NguoiDungService {
         // Map quyenHan từ TaiKhoan nếu có, ngược lại dùng loaiNguoiDung để suy ra
         String quyenHan;
         Boolean kichHoat;
+        String email = "";
 
         if (taiKhoanOpt.isPresent()) {
             TaiKhoan tk = taiKhoanOpt.get();
             kichHoat = tk.getKichHoat();
+            email = tk.getEmail();
             // TaiKhoan.QuyenHanEnum: quan_tri_vien, giao_dich_vien, giam_doc
             quyenHan = switch (tk.getQuyenHan()) {
                 case quan_tri_vien -> "ADMIN";
@@ -56,6 +58,7 @@ public class NguoiDungService {
 
         return NguoiDungDTO.builder()
                 .id(nd.getId())
+                .email(email)
                 .hoTen(nd.getHoTen())
                 .cmnd(nd.getCmnd())
                 .diaChi(nd.getDiaChi())
@@ -99,6 +102,13 @@ public class NguoiDungService {
 
     public List<NguoiDungDTO> layTatCa() {
         return nguoiDungRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<NguoiDungDTO> layKhachHang() {
+        return nguoiDungRepository.findByLoaiNguoiDung(NguoiDung.LoaiNguoiDungEnum.ROLE_USER)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());

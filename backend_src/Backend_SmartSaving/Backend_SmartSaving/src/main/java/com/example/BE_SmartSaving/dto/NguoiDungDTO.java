@@ -22,6 +22,9 @@ public class NguoiDungDTO {
 
     private Integer id;
 
+    @JsonProperty("email")
+    private String email;
+
     @JsonProperty("hoTen")
     private String hoTen;
 

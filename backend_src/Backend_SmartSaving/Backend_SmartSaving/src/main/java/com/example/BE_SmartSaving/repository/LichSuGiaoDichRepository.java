@@ -11,4 +11,6 @@ public interface LichSuGiaoDichRepository extends JpaRepository<LichSuGiaoDich, 
     List<LichSuGiaoDich> findBySoTietKiemIdOrderByThoiGianDesc(Integer soTietKiemId);
 
     List<LichSuGiaoDich> findBySoTietKiemId(Integer soTietKiemId);
+
+    List<LichSuGiaoDich> findAllByOrderByThoiGianDesc();
 }

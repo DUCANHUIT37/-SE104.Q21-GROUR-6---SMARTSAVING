@@ -1,25 +1,47 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import * as XLSX from 'xlsx';
+import { Loader2 } from 'lucide-react';
 import BCPTIcon from '../../assets/BaoCaoKeToan_BaoCaoPhanTich.svg';
 import TVGVIcon from '../../assets/BaoCaoKeToan_TongVonGuiVao.svg';
 import TCGNIcon from '../../assets/BaoCaoKeToan_TongChiGiaiNgan.svg';
 import CLTIcon from '../../assets/BaoCaoKeToan_ChenhLechThuc.svg';
 import BDDCDTIcon from '../../assets/BaoCaoKeToan_BieuDoDoiChieuDongTien.svg';
-import { lichSuGiaoDichData } from '../../data/fakeDb';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { giaoDichApi } from '../../services/api';
 
 const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val) + ' đ';
 
 export default function FinancialReport() {
   const [activeTab, setActiveTab] = useState('Tất cả');
+  const [giaoDichData, setGiaoDichData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Tính toán dữ liệu thật từ fakeDb
+  useEffect(() => {
+    const fetchGiaoDich = async () => {
+      try {
+        const res = await giaoDichApi.layTatCa();
+        setGiaoDichData(res.data.data || []);
+      } catch (error) {
+        console.error('Lỗi lấy dữ liệu giao dịch', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGiaoDich();
+  }, []);
+
+  // Tính toán dữ liệu thật từ DB
   const stats = useMemo(() => {
-    let data = lichSuGiaoDichData;
+    let data = giaoDichData;
     // Tạm thời bỏ qua filter thời gian phức tạp để focus vào UI, hoặc filter nhẹ
     
-    const tongThu = data.filter(g => g.soTien > 0).reduce((a, b) => a + b.soTien, 0);
-    const tongChi = data.filter(g => g.soTien < 0).reduce((a, b) => a + Math.abs(b.soTien), 0);
+    // Gửi thêm tiền và Mở sổ tiết kiệm
+    const tongThu = data.filter(g => g.loaiGiaoDich === 'gui_them' || g.loaiGiaoDich === 'mo_so')
+                        .reduce((a, b) => a + b.soTien, 0);
+    // Rút tiền và Tất toán
+    const tongChi = data.filter(g => g.loaiGiaoDich === 'rut_tien' || g.loaiGiaoDich === 'tat_toan')
+                        .reduce((a, b) => a + Math.abs(b.soTien), 0);
     const chenhLech = tongThu - tongChi;
 
     return {
@@ -28,7 +50,41 @@ export default function FinancialReport() {
       chenhLech,
       soGiaoDich: data.length
     };
-  }, [activeTab]);
+  }, [activeTab, giaoDichData]);
+
+  const chartData = useMemo(() => {
+    // Lấy 15 ngày gần nhất
+    const days = [];
+    const today = new Date();
+    for (let i = 14; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+      days.push({
+        ngay: dateStr,
+        fullDate: d.toISOString().split('T')[0],
+        thu: 0,
+        chi: 0
+      });
+    }
+
+    days.forEach(d => {
+      const gds = giaoDichData.filter(g => g.thoiGian && g.thoiGian.startsWith(d.fullDate));
+      
+      const thuInDay = gds
+        .filter(g => g.loaiGiaoDich === 'gui_them' || g.loaiGiaoDich === 'mo_so')
+        .reduce((sum, g) => sum + g.soTien, 0);
+        
+      const chiInDay = gds
+        .filter(g => g.loaiGiaoDich === 'rut_tien' || g.loaiGiaoDich === 'tat_toan')
+        .reduce((sum, g) => sum + Math.abs(g.soTien), 0);
+        
+      d.thu = Math.round(thuInDay / 1000000); // Triệu VNĐ
+      d.chi = Math.round(chiInDay / 1000000);
+    });
+
+    return days;
+  }, [giaoDichData]);
 
   const cashflowStats = [
     {
@@ -63,10 +119,10 @@ export default function FinancialReport() {
 
   const handleExportExcel = () => {
     // Xuất Excel đơn giản danh sách giao dịch
-    const ws = XLSX.utils.json_to_sheet(lichSuGiaoDichData.map(d => ({
-      'Mã GD': d.id,
+    const ws = XLSX.utils.json_to_sheet(giaoDichData.map(d => ({
+      'Mã GD': d.maGiaoDich,
       'Số Tiền': d.soTien,
-      'Loại': d.soTien > 0 ? 'Thu' : 'Chi',
+      'Loại': (d.loaiGiaoDich === 'gui_them' || d.loaiGiaoDich === 'mo_so') ? 'Thu' : 'Chi',
       'Thời gian': d.thoiGian
     })));
     const wb = XLSX.utils.book_new();
@@ -157,39 +213,21 @@ export default function FinancialReport() {
         </div>
 
         {/* Vùng chứa biểu đồ  */}
-        <div className="h-[380px] w-full relative flex items-end pl-14 pr-4 pb-10">
-          
-          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pl-14 pr-4 pb-10 pt-2">
-            {[60, 45, 30, 15, 0].map((val) => (
-              <div key={val} className="relative flex items-center w-full">
-                <span className="absolute -left-14 text-xs font-bold text-gray-400 dark:text-gray-500 w-10 text-right">
-                  {val}M
-                </span>
-                <div className={`flex-1 border-t border-dashed ${val === 0 ? 'border-gray-300 dark:border-gray-700' : 'border-gray-200 dark:border-gray-800/80'}`}></div>
-              </div>
-            ))}
-          </div>
-
-          {/* Vùng vẽ cột */}
-          <div className="flex-1 flex justify-center items-end gap-1 h-full z-10">
-             {[...Array(8)].map((_, i) => <div key={i} className="flex-1 h-full"></div>)}
-             
-             <div className="flex items-end gap-1.5 px-3 h-full group cursor-pointer relative">
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2 rounded-xl text-xs font-bold opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap shadow-xl scale-95 group-hover:scale-100 pointer-events-none">
-                  Thu: 21M | Chi: 45M
-                </div>
-                <div className="w-6 bg-emerald-500 rounded-t-md h-[35%] shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all group-hover:bg-emerald-400"></div>
-                <div className="w-6 bg-rose-500 rounded-t-md h-[75%] shadow-[0_0_15px_rgba(244,63,94,0.3)] transition-all group-hover:bg-rose-400"></div>
-             </div>
-
-             {[...Array(10)].map((_, i) => <div key={i} className="flex-1 h-full"></div>)}
-          </div>
-
-          <div className="absolute bottom-0 left-14 right-4 flex justify-between text-xs font-bold text-gray-400 dark:text-gray-600">
-            {["01/03", "02/03", "03/03", "04/03", "05/03", "06/03", "07/03", "08/03", "09/03", "10/03", "11/03", "12/03", "13/03", "14/03", "15/03", "16/03", "17/03", "18/03", "19/03"].map(d => (
-              <span key={d} className={d === "09/03" ? "text-emerald-600 dark:text-emerald-400" : ""}>{d}</span>
-            ))}
-          </div>
+        <div className="h-[380px] w-full mt-8">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 20, right: 20, left: 0, bottom: 0 }} barGap={6}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(156, 163, 175, 0.2)" />
+              <XAxis dataKey="ngay" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} dx={-10} tickFormatter={(val) => `${val}M`} />
+              <Tooltip 
+                cursor={{ fill: 'rgba(156, 163, 175, 0.1)' }}
+                contentStyle={{ background: '#1f2937', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#f9fafb' }}
+                formatter={(val, name) => [`${val} Triệu VNĐ`, name === 'thu' ? 'Tiền Thu' : 'Tiền Chi']}
+              />
+              <Bar dataKey="thu" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={30} />
+              <Bar dataKey="chi" fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={30} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
         <div className="flex justify-center gap-10 pt-4">

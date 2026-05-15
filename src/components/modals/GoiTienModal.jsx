@@ -1,15 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { XCircle, TrendingUp, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { soTietKiemApi, loaiTietKiemApi, thamSoApi } from '../../services/api';
 import { cn } from '../../lib/utils';
-import { loaiTietKiemData, thamSoData, soTietKiemData, lichSuGiaoDichData, generateMaGiaoDich } from '../../data/fakeDb';
 
-const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val) + ' ₫';
+const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val || 0) + ' ₫';
 
 export default function GoiTienModal({ so, onClose, onSuccess }) {
-  const loai = loaiTietKiemData.find(lt => lt.id === so.loaiTietKiemId);
+  const [loai, setLoai] = useState(null);
+  const [soTienGuiThemToiThieu, setSoTienGuiThemToiThieu] = useState(100000);
+  
   const [soTien, setSoTien] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [ltRes, tsRes] = await Promise.all([
+          loaiTietKiemApi.layTatCa(),
+          thamSoApi.layTatCa()
+        ]);
+        const lt = ltRes.data.data.find(l => l.id === so.loaiTietKiem.id);
+        setLoai(lt);
+        
+        const minAmount = tsRes.data.data.find(ts => ts.khoa === 'soTienGuiThemToiThieu')?.giaTri;
+        if (minAmount) setSoTienGuiThemToiThieu(Number(minAmount));
+      } catch (err) {
+        toast.error('Lỗi tải dữ liệu');
+      }
+    };
+    fetchData();
+  }, [so]);
 
   // Kiểm tra điều kiện kỳ hạn (chỉ cảnh báo, không chặn với sổ không kỳ hạn)
   const kiemTraKyHan = () => {
@@ -26,41 +48,25 @@ export default function GoiTienModal({ so, onClose, onSuccess }) {
 
   const canhBaoKyHan = kiemTraKyHan();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const amount = Number(soTien);
-    if (!amount || amount < thamSoData.soTienGuiThemToiThieu) {
-      setError(`Số tiền tối thiểu là ${formatTien(thamSoData.soTienGuiThemToiThieu)}`);
+    if (!amount || amount < soTienGuiThemToiThieu) {
+      setError(`Số tiền tối thiểu là ${formatTien(soTienGuiThemToiThieu)}`);
       return;
     }
     if (canhBaoKyHan) { setError('Không thể gởi thêm khi chưa đến kỳ hạn tính lãi.'); return; }
+    
     setLoading(true);
-    setTimeout(() => {
-      // Cập nhật fakeDb
-      const idx = soTietKiemData.findIndex(s => s.id === so.id);
-      if (idx !== -1) {
-        soTietKiemData[idx].soDuHienTai += amount;
-        // Cập nhật ngày đáo hạn tiếp theo
-        if (loai && loai.kyHanThang > 0 && so.ngayDaoHan) {
-          const newDaoHan = new Date(so.ngayDaoHan);
-          newDaoHan.setMonth(newDaoHan.getMonth() + loai.kyHanThang);
-          soTietKiemData[idx].ngayDaoHan = newDaoHan.toISOString().split('T')[0];
-        }
-      }
-      lichSuGiaoDichData.push({
-        id: lichSuGiaoDichData.length + 1,
-        maGiaoDich: generateMaGiaoDich('PG'),
-        soTietKiemId: so.id,
-        loaiGiaoDich: 'goi_them',
-        soTien: amount,
-        soDuTruoc: so.soDuHienTai,
-        soDuSau: so.soDuHienTai + amount,
-        ghiChu: 'Gởi thêm tiền',
-        thoiGian: new Date().toISOString(),
-      });
-      setLoading(false);
+    try {
+      await soTietKiemApi.guiThemTien(so.id, amount);
+      toast.success('Gởi thêm tiền thành công!');
       onSuccess();
-    }, 800);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Lỗi khi gởi thêm tiền');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -82,11 +88,11 @@ export default function GoiTienModal({ so, onClose, onSuccess }) {
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Số tiền gởi thêm * (tối thiểu {formatTien(thamSoData.soTienGuiThemToiThieu)})
+            Số tiền gởi thêm * (tối thiểu {formatTien(soTienGuiThemToiThieu)})
           </label>
           <input
             type="number" value={soTien} onChange={e => { setSoTien(e.target.value); setError(''); }}
-            placeholder="100,000" min={thamSoData.soTienGuiThemToiThieu} step={100000}
+            placeholder="100,000" min={soTienGuiThemToiThieu} step={100000}
             className={inputCls(!!error)}
           />
           {error && <p className="text-xs text-red-400 flex items-center gap-1"><XCircle className="w-3 h-3" />{error}</p>}

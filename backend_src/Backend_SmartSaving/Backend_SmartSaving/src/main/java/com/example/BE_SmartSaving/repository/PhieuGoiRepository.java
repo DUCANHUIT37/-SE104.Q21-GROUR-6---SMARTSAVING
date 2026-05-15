@@ -35,4 +35,10 @@ public interface PhieuGoiRepository extends JpaRepository<PhieuGoi, Integer> {
             "AND s.ngayMo = :ngay")
     BigDecimal tinhTongMoSoTheoLoaiVaNgay(@Param("loaiId") Integer loaiId,
                                           @Param("ngay") LocalDate ngay);
+
+    @Query("SELECT COALESCE(SUM(pg.soTienGoi), 0) FROM PhieuGoi pg WHERE FUNCTION('DATE', pg.ngayGoi) = :ngay")
+    BigDecimal tinhTongThuGoiThemTrongNgay(@Param("ngay") LocalDate ngay);
+
+    @Query("SELECT COALESCE(SUM(s.soTienBanDau), 0) FROM SoTietKiem s WHERE FUNCTION('DATE', s.ngayMo) = :ngay")
+    BigDecimal tinhTongThuMoSoTrongNgay(@Param("ngay") LocalDate ngay);
 }

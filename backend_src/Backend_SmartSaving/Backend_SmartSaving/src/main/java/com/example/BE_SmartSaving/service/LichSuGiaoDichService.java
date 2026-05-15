@@ -75,4 +75,13 @@ public class LichSuGiaoDichService {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
+
+    /** Lấy toàn bộ lịch sử giao dịch của hệ thống, sắp xếp mới nhất trước – trả về DTO */
+    public List<LichSuGiaoDichDTO> layTatCaGiaoDich() {
+        return lichSuGiaoDichRepository
+                .findAllByOrderByThoiGianDesc()
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
 }

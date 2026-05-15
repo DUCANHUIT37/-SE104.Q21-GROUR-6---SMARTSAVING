@@ -40,4 +40,7 @@ public interface SoTietKiemRepository extends JpaRepository<SoTietKiem, Integer>
             "AND p.tatToan = true")
     Long demSoDongTheoLoaiVaNgay(@Param("loaiId") Integer loaiId,
                                  @Param("ngay") java.time.LocalDate ngay);
+
+    @Query("SELECT COALESCE(SUM(s.soDuHienTai), 0) FROM SoTietKiem s")
+    java.math.BigDecimal sumSoDuHienTai();
 }

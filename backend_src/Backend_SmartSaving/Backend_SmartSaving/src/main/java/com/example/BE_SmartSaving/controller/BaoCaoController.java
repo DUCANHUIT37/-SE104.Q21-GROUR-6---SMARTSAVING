@@ -28,6 +28,15 @@ public class BaoCaoController {
     private LichSuGiaoDichService lichSuGiaoDichService;
 
     /**
+     * Lấy các thống kê tổng quan cho màn hình Dashboard
+     * GET /api/baocao/tong-quan
+     */
+    @GetMapping("/tong-quan")
+    public ResponseEntity<ApiResponse<?>> tongQuan() {
+        return ResponseEntity.ok(ApiResponse.success(baoCaoService.layTongQuan()));
+    }
+
+    /**
      * BM5.1 – Báo cáo doanh số hoạt động trong ngày.
      * GET /api/baocao/ngay?ngay=2026-05-12
      */

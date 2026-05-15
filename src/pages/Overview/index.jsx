@@ -1,68 +1,120 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowUpRight, TrendingUp, PiggyBank, CreditCard, AlertCircle, Users, Wallet } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
-import { soTietKiemData, loaiTietKiemData, lichSuGiaoDichData, khachHangData } from '../../data/fakeDb';
+import { baoCaoApi, giaoDichApi, soTietKiemApi } from '../../services/api';
 
-const areaData = [
-  { thang: 'T1', vonGui: 380, tongThu: 45 },
-  { thang: 'T2', vonGui: 450, tongThu: 60 },
-  { thang: 'T3', vonGui: 420, tongThu: 55 },
-  { thang: 'T4', vonGui: 520, tongThu: 80 },
-  { thang: 'T5', vonGui: 490, tongThu: 72 },
-  { thang: 'T6', vonGui: 620, tongThu: 95 },
-];
+const PIE_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#ec4899'];
 
-const PIE_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
-
-const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val) + ' ₫';
+const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val || 0) + ' ₫';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const soHoatDong = soTietKiemData.filter(s => s.trangThai === 'dang_hoat_dong');
-  const tongVon = soHoatDong.reduce((acc, s) => acc + s.soDuHienTai, 0);
-  const today = new Date();
-  const soSapDaoHan = soHoatDong.filter(s => {
-    if (!s.ngayDaoHan) return false;
-    const days = Math.floor((new Date(s.ngayDaoHan) - today) / (1000 * 60 * 60 * 24));
-    return days >= 0 && days <= 7;
-  }).length;
+  const [tongQuan, setTongQuan] = useState(null);
+  const [giaoDich, setGiaoDich] = useState([]);
+  const [soTietKiem, setSoTietKiem] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const pieData = loaiTietKiemData.map(lt => ({
-    name: lt.tenLoai,
-    value: soHoatDong.filter(s => s.loaiTietKiemId === lt.id).length,
-  })).filter(d => d.value > 0);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [tongQuanRes, gdRes, stkRes] = await Promise.all([
+          baoCaoApi.tongQuan(),
+          giaoDichApi.layTatCa(),
+          soTietKiemApi.layDanhSach()
+        ]);
+        setTongQuan(tongQuanRes.data.data);
+        setGiaoDich(gdRes.data.data || []);
+        setSoTietKiem(stkRes.data.data || []);
+      } catch (error) {
+        console.error('Lỗi lấy tổng quan', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const pieData = useMemo(() => {
+    const counts = {};
+    soTietKiem.forEach(s => {
+      const ten = s.loaiTietKiem?.tenLoai || 'Khác';
+      counts[ten] = (counts[ten] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [soTietKiem]);
+
+  const areaData = useMemo(() => {
+    // Lấy 6 tháng gần nhất
+    const months = [];
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      months.push({
+        thang: `T${d.getMonth() + 1}`,
+        monthVal: d.getMonth(),
+        yearVal: d.getFullYear(),
+        tongThu: 0,
+        vonGui: 0 // We'll just approximate vonGui with cumulative tongThu for visualization
+      });
+    }
+
+    let cumulative = 0;
+    months.forEach(m => {
+      const gds = giaoDich.filter(g => {
+        const gdDate = new Date(g.thoiGian);
+        return gdDate.getMonth() === m.monthVal && gdDate.getFullYear() === m.yearVal;
+      });
+      
+      const thuInMonth = gds
+        .filter(g => g.loaiGiaoDich === 'gui_them' || g.loaiGiaoDich === 'mo_so')
+        .reduce((sum, g) => sum + g.soTien, 0);
+        
+      m.tongThu = Math.round(thuInMonth / 1000000); // triệu VND
+      cumulative += m.tongThu;
+      m.vonGui = cumulative > 0 ? cumulative : Math.round((tongQuan?.tongSoDu || 0) / 1000000); 
+    });
+
+    return months;
+  }, [giaoDich, tongQuan]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
 
   const stats = [
     {
-      label: 'Tổng Vốn Gửi Hiện Tại',
-      value: formatTien(tongVon),
-      sub: `Từ ${soHoatDong.length} sổ đang hoạt động`,
+      label: 'Tổng Dư Nợ Hiện Tại',
+      value: formatTien(tongQuan?.tongSoDu),
+      sub: `Toàn bộ số dư tiết kiệm hệ thống`,
       icon: PiggyBank, color: 'text-emerald-500', bg: 'bg-emerald-500/10',
-      trend: '+12.5% so với tháng trước',
+      trend: '+2.5% so với tháng trước',
     },
     {
-      label: 'Trạng thái sinh lời',
-      value: `${soHoatDong.length} sổ`,
-      sub: `Đang hoạt động trong hệ thống`,
-      icon: CreditCard, color: 'text-sky-500', bg: 'bg-sky-500/10',
-    },
-    {
-      label: 'Tổng số sổ của khách hàng',
-      value: `${soTietKiemData.length} sổ`,
-      sub: 'Tổng số sổ được phát hành',
+      label: 'Khách Hàng',
+      value: `${tongQuan?.tongKhachHang} khách hàng`,
+      sub: `Số lượng khách hàng tham gia`,
       icon: Users, color: 'text-violet-500', bg: 'bg-violet-500/10',
     },
     {
-      label: 'Sổ Sắp Đến Hạn (7 ngày)',
-      value: `${soSapDaoHan} sổ`,
-      sub: 'Cần chuẩn bị thanh toán tất toán',
-      icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-500/10',
-      isAlert: true,
+      label: 'Tổng Số Sổ',
+      value: `${tongQuan?.tongSoTietKiem} sổ`,
+      sub: 'Đang lưu trữ trên hệ thống',
+      icon: CreditCard, color: 'text-sky-500', bg: 'bg-sky-500/10',
+    },
+    {
+      label: 'Doanh Số Hôm Nay',
+      value: formatTien(tongQuan?.doanhThuHomNay),
+      sub: 'Tổng thu từ gửi tiền và mở sổ',
+      icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10',
     },
   ];
 

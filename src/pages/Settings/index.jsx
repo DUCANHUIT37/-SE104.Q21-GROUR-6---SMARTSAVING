@@ -1,23 +1,51 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Settings as SettingsIcon, Save } from 'lucide-react';
-import { loaiTietKiemData, thamSoData } from '../../data/fakeDb';
+import { Settings as SettingsIcon, Save, Loader2 } from 'lucide-react';
+import { thamSoApi, loaiTietKiemApi } from '../../services/api';
 import { cn } from '../../lib/utils';
 
 export default function Settings() {
-  const [thamSo, setThamSo] = useState({ ...thamSoData });
-  const [laiSuat, setLaiSuat] = useState(loaiTietKiemData.map(lt => ({ ...lt })));
+  const [thamSo, setThamSo] = useState({});
+  const [laiSuat, setLaiSuat] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleSave = () => {
-    setSaving(true);
-    setTimeout(() => {
-      Object.assign(thamSoData, thamSo);
-      laiSuat.forEach((lt, i) => { loaiTietKiemData[i].laiSuatNam = lt.laiSuatNam; });
-      setSaving(false);
-      toast.success('Đã lưu tham số hệ thống thành công!');
-    }, 800);
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const [tsRes, lsRes] = await Promise.all([
+          thamSoApi.layTatCa(),
+          loaiTietKiemApi.layTatCa()
+        ]);
+        
+        // Convert thamSo array to object for easier state management
+        const tsObj = {};
+        tsRes.data.data.forEach(item => {
+          tsObj[item.khoa] = item.giaTri;
+        });
+        setThamSo(tsObj);
+        setLaiSuat(lsRes.data.data);
+      } catch (error) {
+        toast.error('Không thể tải cấu hình từ máy chủ');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSave = async () => {
+    // In a real implementation, you would loop through changes and call PUT /api/thamso/{khoa}
+    toast.error('Tính năng lưu đang được cập nhật (Backend cần API cập nhật hàng loạt)');
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">

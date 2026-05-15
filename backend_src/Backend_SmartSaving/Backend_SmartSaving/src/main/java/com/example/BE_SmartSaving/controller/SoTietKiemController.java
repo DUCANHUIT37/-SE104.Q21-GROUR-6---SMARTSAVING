@@ -26,6 +26,14 @@ public class SoTietKiemController {
     private PhieuRutService phieuRutService;
     @Autowired
     private PhieuGoiService phieuGoiService;
+    @Autowired
+    private LichSuGiaoDichService lichSuGiaoDichService;
+
+    /** Lấy toàn bộ lịch sử giao dịch (phiếu gửi/rút) */
+    @GetMapping("/giao-dich")
+    public ResponseEntity<ApiResponse<?>> layTatCaGiaoDich() {
+        return ResponseEntity.ok(ApiResponse.success(lichSuGiaoDichService.layTatCaGiaoDich()));
+    }
 
     /** Mở sổ tiết kiệm mới (BM1, QĐ1) */
     @PostMapping("/mo-so")

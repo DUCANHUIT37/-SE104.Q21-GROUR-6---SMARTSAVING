@@ -75,14 +75,30 @@ export const loaiTietKiemApi = {
 export const nguoiDungApi = {
   layTatCa: () =>
     api.get('/nguoidung'),
+  layKhachHang: () =>
+    api.get('/nguoidung/khach-hang'),
   layTheoId: (id) =>
     api.get(`/nguoidung/${id}`),
 };
 
 // ─── Báo Cáo API ──────────────────────────────────────────────────────────────
 export const baoCaoApi = {
+  tongQuan: () =>
+    api.get('/baocao/tong-quan'),
   theo_ngay: (ngay) =>
     api.get('/baocao/ngay', { params: { ngay } }),
   theo_thang: (nam, thang) =>
     api.get('/baocao/thang', { params: { nam, thang } }),
+};
+
+// ─── Lịch Sử Giao Dịch API ────────────────────────────────────────────────────
+export const giaoDichApi = {
+  layTatCa: () =>
+    api.get('/sotietkiem/giao-dich'),
+};
+
+// ─── Tham Số API ──────────────────────────────────────────────────────────────
+export const thamSoApi = {
+  layTatCa: () =>
+    api.get('/thamso'),
 };

@@ -28,6 +28,13 @@ public class NguoiDungController {
         return ResponseEntity.ok(ApiResponse.success(list));
     }
 
+    /** Lấy danh sách khách hàng */
+    @GetMapping("/khach-hang")
+    public ResponseEntity<ApiResponse<List<NguoiDungDTO>>> layKhachHang() {
+        List<NguoiDungDTO> list = nguoiDungService.layKhachHang();
+        return ResponseEntity.ok(ApiResponse.success(list));
+    }
+
     /** Lấy theo ID */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> layTheoId(@PathVariable Integer id) {
