@@ -15,8 +15,10 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    // Khóa bí mật (ít nhất 256-bit cho HS256). Trong thực tế nên lấy từ env/application.properties.
-    private static final String SECRET_STRING = "SmartsavingSecretKey123456789012345678901234567890";
+    // Khóa bí mật (ít nhất 256-bit cho HS256). Ưu tiên lấy từ biến môi trường.
+    private static final String SECRET_STRING = System.getenv("JWT_SECRET") != null 
+            ? System.getenv("JWT_SECRET") 
+            : "SmartsavingSecretKey123456789012345678901234567890";
     private final Key key = Keys.hmacShaKeyFor(SECRET_STRING.getBytes());
 
     // Thời gian hết hạn: 1 giờ (3600000 ms)
