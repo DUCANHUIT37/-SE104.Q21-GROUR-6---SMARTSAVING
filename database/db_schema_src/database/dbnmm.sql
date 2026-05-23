@@ -293,4 +293,4 @@ INSERT INTO NguoiDung (ho_ten, cmnd, dia_chi, so_dien_thoai, loai_nguoi_dung) VA
 ('Quản Trị Viên', '000000000000', 'Hệ thống', NULL, 'quan_tri_vien');
 
 INSERT INTO TaiKhoan (email, mat_khau_hash, quyen_han, nguoi_dung_id) VALUES
-('admin@smartsavings.com', '$2a$10$5ShPaYZQ0bbqGk.zNuZ/kuY2TAcpQ2xKcQuEXyf1VeJIiDf6SFcra', 'quan_tri_vien', 1);
+('admin@smartsavings.com', '$2a$10$g9Cdf6SxUUgJeidE..QKEuXjOZe7FELDZ4oH5nN.cYM7O69Qfx05.', 'quan_tri_vien', 1);
