@@ -277,10 +277,10 @@ CREATE TABLE LichSuQuyDinh (
 
 -- Loại tiết kiệm ban đầu (theo QĐ1 + UI)
 INSERT INTO LoaiTietKiem (ten_loai, ky_han_thang, lai_suat_nam, so_tien_gui_toi_thieu, dang_ap_dung) VALUES
-('Không kỳ hạn',   0,  0.0015, 1000000, 1),
+('Không kỳ hạn',   0,  0.0050, 1000000, 1),
 ('Kỳ hạn 3 tháng', 3,  0.0500, 1000000, 1),
 ('Kỳ hạn 6 tháng', 6,  0.0550, 1000000, 1),
-('Kỳ hạn 12 tháng',12, 0.0650, 1000000, 1);
+('Kỳ hạn 12 tháng',12, 0.0700, 1000000, 1);
 
 -- Quy định hệ thống (theo QĐ1, QĐ2, QĐ3, QĐ6)
 INSERT INTO QuyDinh (khoa, gia_tri, kieu_du_lieu, mo_ta) VALUES
@@ -293,4 +293,4 @@ INSERT INTO NguoiDung (ho_ten, cmnd, dia_chi, so_dien_thoai, loai_nguoi_dung) VA
 ('Quản Trị Viên', '000000000000', 'Hệ thống', NULL, 'quan_tri_vien');
 
 INSERT INTO TaiKhoan (email, mat_khau_hash, quyen_han, nguoi_dung_id) VALUES
-('admin@smartsavings.com', '$2b$10$placeholder_hash_change_this', 'quan_tri_vien', 1);
+('admin@smartsavings.com', '$2a$10$g9Cdf6SxUUgJeidE..QKEuXjOZe7FELDZ4oH5nN.cYM7O69Qfx05.', 'quan_tri_vien', 1);
