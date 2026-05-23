@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import logoIcon from '../assets/logo.svg';
+import logoIcon from '../assets/Logo.svg';
 
 export default function Register() {
   const navigate = useNavigate();
