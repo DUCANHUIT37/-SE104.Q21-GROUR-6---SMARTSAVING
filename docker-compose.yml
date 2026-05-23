@@ -3,7 +3,7 @@ version: '3.8'
 services:
   backend:
     build:
-      context: ./backend_src/Backend_SmartSaving/Backend_SmartSaving
+      context: ./backend
       dockerfile: Dockerfile
     container_name: smartsaving_backend
     ports:
@@ -11,12 +11,12 @@ services:
     # Đọc cấu hình bảo mật từ file .env trong backend.
     # Người clone phải copy .env.example thành .env và điền mật khẩu.
     env_file:
-      - ./backend_src/Backend_SmartSaving/Backend_SmartSaving/.env
+      - ./backend/.env
     restart: unless-stopped
 
   frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: smartsaving_frontend
     ports:
