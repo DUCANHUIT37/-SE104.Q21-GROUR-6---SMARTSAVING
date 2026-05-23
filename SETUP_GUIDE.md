@@ -20,8 +20,8 @@ Với Docker, bạn không cần cài đặt Node.js hay Java JDK gì cả. Mọ
 
 1. **Clone mã nguồn về máy local:**
    ```bash
-   git clone https://github.com/ken1301/SmarSavingV2.git
-   cd SmarSavingV2
+   git clone https://github.com/DUCANHUIT37/-SE104.Q21-GROUR-6---SMARTSAVING.git
+   cd -SE104.Q21-GROUR-6---SMARTSAVING
    ```
 
 2. **Cấu hình biến môi trường bảo mật (BẮT BUỘC):**
