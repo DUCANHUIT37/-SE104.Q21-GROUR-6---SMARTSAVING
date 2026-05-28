@@ -69,6 +69,12 @@ export const loaiTietKiemApi = {
     api.get('/loaitietkiem/dang-ap-dung'),
   layTatCa: () =>
     api.get('/loaitietkiem'),
+  themLoai: (data) =>
+    api.post('/loaitietkiem', data),
+  capNhatLaiSuat: (id, laiSuat) =>
+    api.put(`/loaitietkiem/${id}/lai-suat`, null, { params: { laiSuat } }),
+  batTatLoai: (id) =>
+    api.put(`/loaitietkiem/${id}/toggle`),
 };
 
 // ─── Người Dùng API ───────────────────────────────────────────────────────────
@@ -101,4 +107,6 @@ export const giaoDichApi = {
 export const thamSoApi = {
   layTatCa: () =>
     api.get('/thamso'),
+  capNhat: (khoa, giaTri) =>
+    api.put(`/thamso/${khoa}`, null, { params: { giaTri } }),
 };

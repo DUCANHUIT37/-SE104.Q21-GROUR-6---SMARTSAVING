@@ -50,7 +50,7 @@ export default function MoSo() {
   }, []);
 
   const loaiDaChon = loaiDangApDung.find(lt => lt.id === Number(form.loaiTietKiemId));
-  const laiSuatUocTinh = loaiDaChon ? (loaiDaChon.laiSuatNam * 100) : 0; // Convert to % if backend returns 0.05
+  const laiSuatUocTinh = loaiDaChon ? Number((loaiDaChon.laiSuatNam * 100).toFixed(2)) : 0; // Convert to % with precision fix
 
   const handleCmndBlur = async () => {
     if (!form.cmnd.trim()) return;
@@ -240,7 +240,7 @@ export default function MoSo() {
                     <option value="" disabled>-- Chọn kỳ hạn gửi --</option>
                     {loaiDangApDung.map((loai) => (
                       <option key={loai.id} value={loai.id}>
-                        {loai.tenLoai} (Lãi: {loai.laiSuatNam}%/năm)
+                        {loai.tenLoai} (Lãi: {Number(loai.laiSuatNam * 100).toFixed(2).replace(/\.?0+$/, '')}%/năm)
                       </option>
                     ))}
                   </select>
