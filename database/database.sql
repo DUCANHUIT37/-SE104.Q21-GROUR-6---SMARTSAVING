@@ -192,8 +192,8 @@ CREATE TABLE LichSuQuyDinh (
 INSERT INTO LoaiTietKiem (ten_loai, ky_han_thang, lai_suat_nam, so_tien_gui_toi_thieu, dang_ap_dung) VALUES
                                                                                                          ('Không kỳ hạn',   0,  0.0015, 1000000, 1),
                                                                                                          ('Kỳ hạn 3 tháng', 3,  0.0500, 1000000, 1),
-                                                                                                         ('Kỳ hạn 6 tháng', 6,  0.0550, 1000000, 1),
-                                                                                                         ('Kỳ hạn 12 tháng',12, 0.0650, 1000000, 1);
+                                                                                                         ('Kỳ hạn 6 tháng', 6,  0.0550, 1000000, 1);
+                                                                                                        
 
 -- Quy định hệ thống (theo QĐ1, QĐ2, QĐ3, QĐ6)
 INSERT INTO QuyDinh (khoa, gia_tri, kieu_du_lieu, mo_ta) VALUES
