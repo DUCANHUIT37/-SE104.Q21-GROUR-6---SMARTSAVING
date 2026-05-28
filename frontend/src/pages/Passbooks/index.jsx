@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { soTietKiemApi } from '../../services/api';
-import { thamSoData, generateMaGiaoDich, tinhTienLai, soNgayGiua, lichSuGiaoDichData, loaiTietKiemData } from '../../data/fakeDb';
+// Removed fakeDb imports as they are no longer needed for mock transactions
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -214,7 +214,7 @@ export default function Passbooks() {
     setAmount('');
   };
 
-  const handleTransaction = (e) => {
+  const handleTransaction = async (e) => {
     e.preventDefault();
     const { so, type } = actionModal;
     if (!so || !type) return;
@@ -222,78 +222,23 @@ export default function Passbooks() {
     setIsSubmitting(true);
     setActionError('');
 
-    // Giả lập xử lý backend
-    setTimeout(() => {
+    try {
       const val = Number(amount);
-      const now = new Date().toISOString().split('T')[0];
-
       if (type === 'DEPOSIT') {
-        if (val < thamSoData.soTienGuiThemToiThieu) {
-          setActionError(`Số tiền gởi thêm tối thiểu là ${formatTien(thamSoData.soTienGuiThemToiThieu)}`);
-          setIsSubmitting(false);
-          return;
-        }
-        
-        const soDuTruoc = so.soDuHienTai;
-        so.soDuHienTai += val;
-        lichSuGiaoDichData.push({
-          id: lichSuGiaoDichData.length + 1,
-          maGiaoDich: generateMaGiaoDich(),
-          soTietKiemId: so.id,
-          loaiGiaoDich: 'goi_them',
-          soTien: val,
-          soDuTruoc,
-          soDuSau: so.soDuHienTai,
-          thoiGian: new Date().toISOString(),
-          ghiChu: 'Gởi thêm tiền vào sổ'
-        });
-        toast.success('Gởi thêm tiền thành công!');
+        await soTietKiemApi.guiThemTien(so.id, val);
+        toast.success('Gửi thêm tiền thành công!');
       } else {
-        // Rút tiền / Tất toán
-        const ngayMo = so.ngayMo;
-        const soNgayThucTe = soNgayGiua(ngayMo, now);
-        
-        if (soNgayThucTe < thamSoData.soNgayGuiToiThieu) {
-          setActionError(`Chưa đủ thời gian gởi tối thiểu (${thamSoData.soNgayGuiToiThieu} ngày).`);
-          setIsSubmitting(false);
-          return;
-        }
-
-        let laiSuatApDung = so.laiSuatMoSo;
-        let ghiChu = 'Rút tiền đúng hạn';
-
-        if (so.loaiTietKiem?.kyHanThang > 0) {
-          if (so.ngayDaoHan && now < so.ngayDaoHan) {
-            laiSuatApDung = loaiTietKiemData.find(lt => lt.kyHanThang === 0).laiSuatNam;
-            ghiChu = 'Tất toán trước hạn (Phạt lãi KKH)';
-          } else {
-            ghiChu = 'Tất toán đúng hạn';
-          }
-        }
-
-        const tienLai = tinhTienLai(so.soDuHienTai, laiSuatApDung, soNgayThucTe);
-        const tongNhan = so.soDuHienTai + tienLai;
-
-        lichSuGiaoDichData.push({
-          id: lichSuGiaoDichData.length + 1,
-          maGiaoDich: generateMaGiaoDich(),
-          soTietKiemId: so.id,
-          loaiGiaoDich: 'tat_toan',
-          soTien: -tongNhan,
-          soDuTruoc: so.soDuHienTai,
-          soDuSau: 0,
-          thoiGian: new Date().toISOString(),
-          ghiChu: `${ghiChu}. Lãi: ${formatTien(tienLai)}`
-        });
-
-        so.soDuHienTai = 0;
-        so.trangThai = 'da_tat_toan';
-        toast.success(`Tất toán thành công! Tổng nhận: ${formatTien(tongNhan)}`);
+        await soTietKiemApi.rutTien(so.id, val);
+        toast.success('Rút tiền / Tất toán thành công!');
       }
-
-      setIsSubmitting(false);
       closeActionModal();
-    }, 1000);
+      fetchDanhSach(); // Cập nhật lại danh sách sau khi giao dịch
+    } catch (err) {
+      console.error('Lỗi giao dịch:', err);
+      setActionError(err.response?.data?.message || 'Có lỗi xảy ra khi thực hiện giao dịch.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
