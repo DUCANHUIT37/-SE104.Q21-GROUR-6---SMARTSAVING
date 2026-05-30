@@ -5,6 +5,7 @@ import com.example.BE_SmartSaving.service.ThamSoAdminService;
 import com.example.BE_SmartSaving.service.ThamSoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,12 +26,14 @@ public class ThamSoController {
 
     /** Lấy toàn bộ tham số – dùng cho màn hình Cài Đặt */
     @GetMapping
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<?>> layTatCa() {
         Object data = thamSoService.layTatCaThamSo();
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     @GetMapping("/{khoa}")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<?>> layTheoKhoa(@PathVariable String khoa) {
         try {
             Object data = thamSoService.layTheoKhoa(khoa);
@@ -46,6 +49,7 @@ public class ThamSoController {
      * Header: X-Admin-Id: {nguoiDungId} (tuỳ chọn)
      */
     @PutMapping("/{khoa}")
+    @PreAuthorize("hasRole('ROLE_quan_tri_vien')")
     public ResponseEntity<ApiResponse<?>> capNhat(@PathVariable String khoa,
                                                     @RequestBody Map<String, String> body,
                                                     @RequestHeader(value = "X-Admin-Id", required = false) Integer adminId) {
@@ -61,6 +65,7 @@ public class ThamSoController {
 
     /** Xem lịch sử thay đổi của 1 tham số */
     @GetMapping("/{khoa}/lich-su")
+    @PreAuthorize("hasRole('ROLE_quan_tri_vien')")
     public ResponseEntity<ApiResponse<?>> layLichSu(@PathVariable String khoa) {
         try {
             Object data = thamSoAdminService.layLichSuThayDoi(khoa);

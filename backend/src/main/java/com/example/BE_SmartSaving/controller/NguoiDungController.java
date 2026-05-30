@@ -6,6 +6,7 @@ import com.example.BE_SmartSaving.model.NguoiDung;
 import com.example.BE_SmartSaving.service.NguoiDungService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,22 +22,25 @@ public class NguoiDungController {
     @Autowired
     private NguoiDungService nguoiDungService;
 
-    /** Lấy toàn bộ danh sách người dùng */
+    /** Lấy toàn bộ danh sách người dùng – chỉ Admin */
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_quan_tri_vien')")
     public ResponseEntity<ApiResponse<List<NguoiDungDTO>>> layTatCa() {
         List<NguoiDungDTO> list = nguoiDungService.layTatCa();
         return ResponseEntity.ok(ApiResponse.success(list));
     }
 
-    /** Lấy danh sách khách hàng */
+    /** Lấy danh sách khách hàng – Admin + Giao Dịch Viên */
     @GetMapping("/khach-hang")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<List<NguoiDungDTO>>> layKhachHang() {
         List<NguoiDungDTO> list = nguoiDungService.layKhachHang();
         return ResponseEntity.ok(ApiResponse.success(list));
     }
 
-    /** Lấy theo ID */
+    /** Lấy theo ID – chỉ Admin */
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_quan_tri_vien')")
     public ResponseEntity<ApiResponse<?>> layTheoId(@PathVariable Integer id) {
         try {
             NguoiDungDTO dto = nguoiDungService.layTheoId(id);
@@ -47,10 +51,11 @@ public class NguoiDungController {
     }
 
     /**
-     * Tra cứu theo CMND – dùng khi giao dịch viên nhập CMND để điền tự động.
+     * Tra cứu theo CMND – Admin + Giao Dịch Viên (dùng khi mở sổ mới).
      * GET /api/nguoidung/cmnd/{cmnd}
      */
     @GetMapping("/cmnd/{cmnd}")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<?>> layTheoCmnd(@PathVariable String cmnd) {
         try {
             NguoiDungDTO dto = nguoiDungService.layTheoCmnd(cmnd);
@@ -60,15 +65,17 @@ public class NguoiDungController {
         }
     }
 
-    /** Tìm kiếm theo tên */
+    /** Tìm kiếm theo tên – Admin + Giao Dịch Viên */
     @GetMapping("/tim-kiem")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<List<NguoiDungDTO>>> timKiem(@RequestParam String hoTen) {
         List<NguoiDungDTO> list = nguoiDungService.timKiemTheoTen(hoTen);
         return ResponseEntity.ok(ApiResponse.success(list));
     }
 
-    /** Tạo mới người dùng (khách hàng hoặc nhân viên) */
+    /** Tạo mới người dùng (khách hàng hoặc nhân viên) – chỉ Admin */
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_quan_tri_vien')")
     public ResponseEntity<ApiResponse<?>> taoMoi(@RequestBody NguoiDung nguoiDung) {
         try {
             NguoiDungDTO dto = nguoiDungService.taoMoi(nguoiDung);
@@ -79,11 +86,11 @@ public class NguoiDungController {
     }
 
     /**
-     * Tra cứu hoặc tạo mới khách hàng theo CMND.
+     * Tra cứu hoặc tạo mới khách hàng theo CMND – Admin + Giao Dịch Viên.
      * POST /api/nguoidung/tra-cuu-hoac-tao
-     * Dùng trong luồng Mở Sổ Mới.
      */
     @PostMapping("/tra-cuu-hoac-tao")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<?>> timHoacTao(@RequestBody NguoiDung thongTin) {
         try {
             NguoiDungDTO dto = nguoiDungService.timHoacTaoKhachHang(thongTin);
@@ -93,8 +100,9 @@ public class NguoiDungController {
         }
     }
 
-    /** Cập nhật thông tin người dùng */
+    /** Cập nhật thông tin người dùng – chỉ Admin */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_quan_tri_vien')")
     public ResponseEntity<ApiResponse<?>> capNhat(@PathVariable Integer id,
                                                     @RequestBody NguoiDung thongTin) {
         try {

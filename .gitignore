@@ -26,6 +26,7 @@ dist-ssr
 # Documentation & Extracted files
 YeuCauvaPhanTichDeTai.*
 doc_content.txt
+PERMISSIONS_MATRIX.md
 docx_extracted/
 
 # Backend & Secrets
