@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
@@ -118,18 +119,78 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
+/* ─── Custom Scrollbar ────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(156,163,175,0.4); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(156,163,175,0.7); }
+.dark ::-webkit-scrollbar-thumb { background: rgba(75,85,99,0.5); }
+.dark ::-webkit-scrollbar-thumb:hover { background: rgba(107,114,128,0.7); }
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
 @layer utilities {
-  .animate-in {
-    animation-duration: 500ms;
-    animation-fill-mode: both;
-    animation-name: fadeIn;
+  /* Page entrance */
+  .page-enter {
+    animation: pageSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
-  
+  @keyframes pageSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Skeleton shimmer */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(156,163,175,0.15) 25%,
+      rgba(156,163,175,0.3)  50%,
+      rgba(156,163,175,0.15) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+  }
+  .dark .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(55,65,81,0.5)  25%,
+      rgba(75,85,99,0.7)  50%,
+      rgba(55,65,81,0.5)  75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Fade-in */
+  .animate-in {
+    animation-duration: 300ms;
+    animation-fill-mode: both;
+  }
+  .fade-in { animation-name: fadeIn; }
+  .zoom-in-95 { animation-name: zoomIn95; }
+  .slide-in-from-left { animation-name: slideInFromLeft; }
+
   @keyframes fadeIn {
     from { opacity: 0; }
-    to { opacity: 1; }
+    to   { opacity: 1; }
+  }
+  @keyframes zoomIn95 {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes slideInFromLeft {
+    from { opacity: 0; transform: translateX(-100%); }
+    to   { opacity: 1; transform: translateX(0); }
   }
 }

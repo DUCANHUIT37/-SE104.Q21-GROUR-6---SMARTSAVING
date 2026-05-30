@@ -38,7 +38,7 @@ const mapDtoToUi = (dto) => ({
 });
 
 export default function Passbooks() {
-  const { isTeller } = useAuth();
+  const { user, isTeller, isAdmin, isKhachHang } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [trangThaiFilter, setTrangThaiFilter] = useState('ALL');
@@ -51,6 +51,10 @@ export default function Passbooks() {
   // ─── Sorting State ───────────────────────────────────────────────────────────
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
+  // ─── Pagination State ─────────────────────────────────────────────────────────
+  const PAGE_SIZE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+
   // Action Modal State
   const [actionModal, setActionModal] = useState({ isOpen: false, type: null, so: null });
   const [amount, setAmount] = useState('');
@@ -62,7 +66,12 @@ export default function Passbooks() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await soTietKiemApi.layDanhSach();
+      let response;
+      if (isKhachHang()) {
+        response = await soTietKiemApi.layTheoKhachHang(user?.id);
+      } else {
+        response = await soTietKiemApi.layDanhSach();
+      }
       const apiData = response.data?.data ?? [];
       setDanhSach(apiData.map(mapDtoToUi));
     } catch (err) {
@@ -78,7 +87,7 @@ export default function Passbooks() {
 
   useEffect(() => {
     fetchDanhSach();
-  }, [fetchDanhSach]);
+  }, [fetchDanhSach, user, isKhachHang]);
 
   const filtered = useMemo(() => {
     return danhSach.filter(so => {
@@ -107,6 +116,7 @@ export default function Passbooks() {
       }
     }
     setSortConfig({ key, direction });
+    setCurrentPage(1); // reset page on sort change
   };
 
   const sortedData = useMemo(() => {
@@ -148,6 +158,13 @@ export default function Passbooks() {
     }
     return sortableItems;
   }, [filtered, sortConfig]);
+
+  // ─── Pagination computation ────────────────────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(sortedData.length / PAGE_SIZE));
+  const pagedData = sortedData.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // Reset to page 1 when filters change
+  useEffect(() => { setCurrentPage(1); }, [search, trangThaiFilter]);
 
   const renderSortableHeader = (label, key) => {
     const isSorted = sortConfig.key === key;
@@ -293,9 +310,9 @@ export default function Passbooks() {
           >
             <RefreshCw className="w-4 h-4" />
           </button>
-          {isTeller() && (
+          {(isTeller() || isAdmin()) && (
             <Link 
-              to="/mo-so"
+              to="/open-savings"
               className="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm transition-all shadow-sm"
             >
               <PlusCircle className="w-4 h-4 mr-2" /> Mở Sổ Mới
@@ -344,8 +361,8 @@ export default function Passbooks() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800/60">
-              {sortedData.length > 0 ? (
-                sortedData.map((s, index) => {
+              {pagedData.length > 0 ? (
+                pagedData.map((s, index) => {
                   const isActive = s.trangThai === 'dang_hoat_dong';
                   return (
                     <tr key={s.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">
@@ -380,7 +397,7 @@ export default function Passbooks() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-right">
-                        {isActive && isTeller() && (
+                        {isActive && (isTeller() || isAdmin()) && (
                           <div className="flex justify-end gap-2">
                             {s.loaiTietKiem?.kyHanThang === 0 && (
                               <button
@@ -413,34 +430,55 @@ export default function Passbooks() {
           </table>
         </div>
 
-        {/* Pagination UI */}
-        <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+        {/* Pagination Footer */}
+        <div className="px-5 py-3.5 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between gap-4">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Hiển thị <span className="font-semibold text-gray-900 dark:text-white">{filtered.length}</span> / <span className="font-semibold text-gray-900 dark:text-white">{danhSach.length}</span> sổ
+            Hiển thị{' '}
+            <span className="font-semibold text-gray-900 dark:text-white">
+              {Math.min((currentPage - 1) * PAGE_SIZE + 1, sortedData.length)}–{Math.min(currentPage * PAGE_SIZE, sortedData.length)}
+            </span>{' '}trong tổng{' '}
+            <span className="font-semibold text-gray-900 dark:text-white">{sortedData.length}</span> sổ
           </p>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700 disabled:opacity-50">
-              Trang trước
-            </button>
-            <div className="flex items-center gap-1">
-              {[1, 2, 3].map((page) => (
-                <button
-                  key={page}
-                  className={cn(
-                    "w-8 h-8 flex items-center justify-center text-xs font-medium rounded-lg transition-all",
-                    page === 1 
-                      ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/20" 
-                      : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
-                  )}
-                >
-                  {page}
-                </button>
-              ))}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                ‹ Trước
+              </button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                // Show pages around currentPage
+                let page;
+                if (totalPages <= 5) page = i + 1;
+                else if (currentPage <= 3) page = i + 1;
+                else if (currentPage >= totalPages - 2) page = totalPages - 4 + i;
+                else page = currentPage - 2 + i;
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={cn(
+                      'w-8 h-8 flex items-center justify-center text-xs font-semibold rounded-lg transition-all',
+                      page === currentPage
+                        ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
+                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                    )}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Sau ›
+              </button>
             </div>
-            <button className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700">
-              Trang sau
-            </button>
-          </div>
+          )}
         </div>
       </div>
 
