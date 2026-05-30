@@ -50,26 +50,28 @@ export default function MoSo() {
   }, []);
 
   const loaiDaChon = loaiDangApDung.find(lt => lt.id === Number(form.loaiTietKiemId));
-  const laiSuatUocTinh = loaiDaChon ? Number((loaiDaChon.laiSuatNam * 100).toFixed(2)) : 0; // Convert to % with precision fix
+  const laiSuatUocTinh = loaiDaChon ? (loaiDaChon.laiSuatNam * 100) : 0; // Convert to % if backend returns 0.05
 
   const handleCmndBlur = async () => {
     if (!form.cmnd.trim()) return;
     try {
-      // Backend NguoiDungController endpoint: /cmnd/{cmnd} (wait, let's look at api.js - we don't have cmnd endpoint in api.js)
-      // I will just use NguoiDungController.traCuuHoacTao later on submit. But we can check if they exist by fetching all KhachHang or using an API if it exists.
-      // Wait, api.js doesn't have layTheoCmnd. Let's just use layKhachHang and filter.
-      const res = await nguoiDungApi.layKhachHang();
-      const khachHangs = res.data.data;
-      const found = khachHangs.find(kh => kh.cmnd === form.cmnd.trim());
+      // BUG-01 FIX: Use targeted CMND endpoint instead of fetching ALL customers
+      const res = await nguoiDungApi.layTheoCmnd(form.cmnd.trim());
+      const found = res.data.data;
       if (found) {
         setKhachHangTimThay(found);
-        setForm(f => ({ ...f, hoTen: found.hoTen, diaChi: found.diaChi, soDienThoai: found.soDienThoai }));
-        toast.success(`Đã tìm thấy khách hàng: ${found.hoTen}`);
-      } else {
-        setKhachHangTimThay(null);
+        setForm(f => ({ ...f, hoTen: found.hoTen, diaChi: found.diaChi || '', soDienThoai: found.soDienThoai || '' }));
+        toast.success(`✅ Khách hàng cũ: ${found.hoTen}`);
       }
     } catch (e) {
-      console.log(e);
+      // 404 = Khách hàng mới, không phải lỗi thật sự
+      if (e.response?.status === 404) {
+        setKhachHangTimThay(null);
+        // Giữ nguyên form để Teller nhập thông tin mới
+      } else {
+        toast.error('Lỗi tra cứu CMND. Vui lòng thử lại.');
+        console.error('CMND lookup error:', e);
+      }
     }
   };
 
@@ -240,7 +242,7 @@ export default function MoSo() {
                     <option value="" disabled>-- Chọn kỳ hạn gửi --</option>
                     {loaiDangApDung.map((loai) => (
                       <option key={loai.id} value={loai.id}>
-                        {loai.tenLoai} (Lãi: {Number(loai.laiSuatNam * 100).toFixed(2).replace(/\.?0+$/, '')}%/năm)
+                        {loai.tenLoai} (Lãi: {parseFloat((loai.laiSuatNam * 100).toFixed(3))}%/năm)
                       </option>
                     ))}
                   </select>

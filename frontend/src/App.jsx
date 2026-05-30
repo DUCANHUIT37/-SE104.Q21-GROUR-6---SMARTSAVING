@@ -37,12 +37,17 @@ function App() {
         {/* Protected routes (cần đăng nhập) */}
         <Route element={<ProtectedRoute><RootLayout /></ProtectedRoute>}>
           <Route path="/overview" element={<Overview />} />
-          <Route path="/open-savings" element={<OpenSavings />} />
-          <Route path="/passbooks" element={<Passbooks />} />
-          <Route path="/transactions" element={<Transactions />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<ProtectedRoute requiredRole="ADMIN"><Settings /></ProtectedRoute>} />
-          <Route path="/users" element={<ProtectedRoute requiredRole="ADMIN"><Users /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<Navigate to="/overview" replace />} />
+          
+          <Route path="/open-savings" element={<ProtectedRoute allowedRoles={['ROLE_quan_tri_vien', 'ROLE_giao_dich_vien']}><OpenSavings /></ProtectedRoute>} />
+          <Route path="/passbooks" element={<ProtectedRoute allowedRoles={['ROLE_quan_tri_vien', 'ROLE_giao_dich_vien']}><Passbooks /></ProtectedRoute>} />
+          <Route path="/transactions" element={<ProtectedRoute allowedRoles={['ROLE_quan_tri_vien', 'ROLE_giao_dich_vien']}><Transactions /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute allowedRoles={['ROLE_quan_tri_vien', 'ROLE_giao_dich_vien']}><Reports /></ProtectedRoute>} />
+          
+          <Route path="/settings" element={<ProtectedRoute allowedRoles={['ROLE_quan_tri_vien']}><Settings /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute allowedRoles={['ROLE_quan_tri_vien']}><Users /></ProtectedRoute>} />
+          
+          <Route path="/my-passbooks" element={<ProtectedRoute allowedRoles={['ROLE_khach_hang']}><Passbooks /></ProtectedRoute>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/overview" />} />

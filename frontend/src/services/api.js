@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+import toast from 'react-hot-toast';
 // ─── Axios Instance ────────────────────────────────────────────────────────────
 const api = axios.create({
   baseURL: `http://${window.location.hostname}:8080/api`,
@@ -22,6 +22,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+
 // ─── Response Interceptor ─────────────────────────────────────────────────────
 // Bắt lỗi 401 (Token hết hạn sau 1 tiếng) → xóa token & về Login
 api.interceptors.response.use(
@@ -30,8 +31,12 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('user_info');
-      // Điều hướng về trang login
-      window.location.href = '/login';
+      // Hiển thị thông báo
+      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      // Điều hướng về trang login sau một khoảng trễ nhỏ
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
     }
     return Promise.reject(error);
   }
@@ -61,6 +66,8 @@ export const soTietKiemApi = {
     api.post(`/sotietkiem/rut-tien/${id}`, null, { params: { soTien } }),
   xoaSo: (id) =>
     api.delete(`/sotietkiem/${id}`),
+  layTheoKhachHang: (khachHangId) =>
+    api.get(`/sotietkiem/khach-hang/${khachHangId}`),
 };
 
 // ─── Loại Tiết Kiệm API ───────────────────────────────────────────────────────
@@ -69,11 +76,11 @@ export const loaiTietKiemApi = {
     api.get('/loaitietkiem/dang-ap-dung'),
   layTatCa: () =>
     api.get('/loaitietkiem'),
-  themLoai: (data) =>
+  taoMoi: (data) =>
     api.post('/loaitietkiem', data),
   capNhatLaiSuat: (id, laiSuat) =>
     api.put(`/loaitietkiem/${id}/lai-suat`, null, { params: { laiSuat } }),
-  batTatLoai: (id) =>
+  toggleTrangThai: (id) =>
     api.put(`/loaitietkiem/${id}/toggle`),
 };
 
@@ -85,6 +92,14 @@ export const nguoiDungApi = {
     api.get('/nguoidung/khach-hang'),
   layTheoId: (id) =>
     api.get(`/nguoidung/${id}`),
+  // BUG-01 FIX: Targeted CMND lookup instead of fetching all customers
+  layTheoCmnd: (cmnd) =>
+    api.get(`/nguoidung/cmnd/${cmnd}`),
+  // WARN-03 FIX: Add update and create endpoints
+  capNhat: (id, data) =>
+    api.put(`/nguoidung/${id}`, data),
+  taoMoi: (data) =>
+    api.post('/nguoidung', data),
 };
 
 // ─── Báo Cáo API ──────────────────────────────────────────────────────────────
@@ -93,8 +108,9 @@ export const baoCaoApi = {
     api.get('/baocao/tong-quan'),
   theo_ngay: (ngay) =>
     api.get('/baocao/ngay', { params: { ngay } }),
+  // BUG-05 FIX: Backend expects single 'thang' param in YYYY-MM format
   theo_thang: (nam, thang) =>
-    api.get('/baocao/thang', { params: { nam, thang } }),
+    api.get('/baocao/thang', { params: { thang: `${nam}-${String(thang).padStart(2, '0')}` } }),
 };
 
 // ─── Lịch Sử Giao Dịch API ────────────────────────────────────────────────────
@@ -107,6 +123,7 @@ export const giaoDichApi = {
 export const thamSoApi = {
   layTatCa: () =>
     api.get('/thamso'),
-  capNhat: (khoa, giaTri) =>
-    api.put(`/thamso/${khoa}`, null, { params: { giaTri } }),
+  // WARN-04 FIX: Add update endpoint so Settings page can save changes
+  capNhat: (khoa, giaTriMoi, lyDo = 'Cập nhật qua giao diện Admin') =>
+    api.put(`/thamso/${khoa}`, { giaTriMoi: String(giaTriMoi), lyDo }),
 };

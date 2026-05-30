@@ -34,17 +34,10 @@ export function AuthProvider({ children }) {
       if (apiResp.statusCode === 200 && apiResp.data) {
         const { token, nguoiDungId, hoTen, quyenHan } = apiResp.data;
 
-        // Ánh xạ quyenHan từ Spring Security role → tên chuẩn FE
-        const roleMap = {
-          'ROLE_ADMIN':    'ADMIN',
-          'ROLE_TELLER':   'TELLER',
-          'ROLE_DIRECTOR': 'ADMIN',
-        };
-
         const userInfo = {
           id: nguoiDungId,
           hoTen,
-          quyenHan: roleMap[quyenHan] ?? quyenHan,
+          quyenHan, // Store exact backend role: 'ROLE_quan_tri_vien', 'ROLE_giao_dich_vien', 'ROLE_khach_hang'
           email,
         };
 
@@ -70,11 +63,12 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  const isAdmin  = () => user?.quyenHan === 'ADMIN';
-  const isTeller = () => user?.quyenHan === 'TELLER' || user?.quyenHan === 'ADMIN';
+  const isAdmin  = () => user?.quyenHan === 'ROLE_quan_tri_vien';
+  const isTeller = () => user?.quyenHan === 'ROLE_giao_dich_vien';
+  const isKhachHang = () => user?.quyenHan === 'ROLE_khach_hang';
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, isAdmin, isTeller }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, isAdmin, isTeller, isKhachHang }}>
       {children}
     </AuthContext.Provider>
   );
