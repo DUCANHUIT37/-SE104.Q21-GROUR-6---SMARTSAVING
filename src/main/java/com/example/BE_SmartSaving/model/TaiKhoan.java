@@ -42,6 +42,6 @@ public class TaiKhoan {
     private LocalDateTime taoLuc = LocalDateTime.now();
 
     public enum QuyenHanEnum {
-        giao_dich_vien, quan_tri_vien, giam_doc
+        giao_dich_vien, quan_tri_vien, giam_doc, khach_hang
     }
 }

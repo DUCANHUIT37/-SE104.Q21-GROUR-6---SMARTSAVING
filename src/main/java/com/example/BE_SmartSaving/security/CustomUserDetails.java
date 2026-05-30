@@ -20,13 +20,18 @@ public class CustomUserDetails implements UserDetails {
         return taiKhoan;
     }
 
+    public Integer getNguoiDungId() {
+        return taiKhoan != null && taiKhoan.getNguoiDung() != null ? taiKhoan.getNguoiDung().getId() : null;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // Ánh xạ QuyenHanEnum sang role của Spring Security
         String roleName = switch (taiKhoan.getQuyenHan()) {
-            case quan_tri_vien -> "ROLE_ADMIN";
-            case giao_dich_vien -> "ROLE_TELLER";
-            case giam_doc -> "ROLE_DIRECTOR";
+            case quan_tri_vien -> "ROLE_quan_tri_vien";
+            case giao_dich_vien -> "ROLE_giao_dich_vien";
+            case giam_doc -> "ROLE_giam_doc";
+            case khach_hang -> "ROLE_khach_hang";
         };
         return Collections.singletonList(new SimpleGrantedAuthority(roleName));
     }

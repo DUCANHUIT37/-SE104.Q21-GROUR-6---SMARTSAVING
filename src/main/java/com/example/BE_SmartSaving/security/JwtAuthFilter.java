@@ -44,6 +44,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 email = jwtUtil.extractEmail(jwtToken);
             } catch (Exception e) {
                 logger.error("Lỗi giải mã token: " + e.getMessage());
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"message\": \"Phiên đăng nhập đã hết hạn hoặc không hợp lệ.\"}");
+                return; // Dừng request ngay lập tức
             }
         }
 

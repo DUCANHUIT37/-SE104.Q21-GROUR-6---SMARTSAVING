@@ -6,6 +6,7 @@ import com.example.BE_SmartSaving.model.SoTietKiem;
 import com.example.BE_SmartSaving.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -31,12 +32,14 @@ public class SoTietKiemController {
 
     /** Lấy toàn bộ lịch sử giao dịch (phiếu gửi/rút) */
     @GetMapping("/giao-dich")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<?>> layTatCaGiaoDich() {
         return ResponseEntity.ok(ApiResponse.success(lichSuGiaoDichService.layTatCaGiaoDich()));
     }
 
-    /** Mở sổ tiết kiệm mới (BM1, QĐ1) */
+    /** Mở sổ tiết kiệm mới (BM1, QĐ1) – Admin + Giao Dịch Viên */
     @PostMapping("/mo-so")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<?>> moSo(@RequestBody SoTietKiem soTietKiem) {
         try {
             SoTietKiemDTO result = soTietKiemService.moSoTietKiem(soTietKiem);
@@ -48,6 +51,7 @@ public class SoTietKiemController {
 
     /** Lấy danh sách tất cả sổ (BM4) */
     @GetMapping
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<List<SoTietKiemDTO>>> layDanhSach() {
         List<SoTietKiemDTO> list = soTietKiemService.layTatCaSo();
         return ResponseEntity.ok(ApiResponse.success(list));
@@ -55,6 +59,7 @@ public class SoTietKiemController {
 
     /** Tìm kiếm theo mã sổ, tên KH hoặc CMND (BM4) */
     @GetMapping("/tim-kiem")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<List<SoTietKiemDTO>>> timKiem(@RequestParam String q) {
         List<SoTietKiemDTO> list = soTietKiemService.timKiem(q);
         return ResponseEntity.ok(ApiResponse.success(list));
@@ -62,6 +67,7 @@ public class SoTietKiemController {
 
     /** Chi tiết 1 sổ */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<?>> layTheoId(@PathVariable Integer id) {
         try {
             SoTietKiemDTO dto = soTietKiemService.laySoTheoId(id);
@@ -73,13 +79,15 @@ public class SoTietKiemController {
 
     /** Lấy tất cả sổ của 1 khách hàng */
     @GetMapping("/khach-hang/{khachHangId}")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien') or (hasRole('ROLE_khach_hang') and #khachHangId == authentication.principal.nguoiDungId)")
     public ResponseEntity<ApiResponse<List<SoTietKiemDTO>>> layTheoKhachHang(@PathVariable Integer khachHangId) {
         List<SoTietKiemDTO> list = soTietKiemService.laySoTheoKhachHang(khachHangId);
         return ResponseEntity.ok(ApiResponse.success(list));
     }
 
-    /** Gởi thêm tiền (BM2, QĐ2) */
+    /** Gởi thêm tiền (BM2, QĐ2) – Admin + Giao Dịch Viên */
     @PutMapping("/gui-them/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<?>> guiThemTien(@PathVariable Integer id,
                                                        @RequestParam BigDecimal soTien) {
         try {
@@ -90,8 +98,9 @@ public class SoTietKiemController {
         }
     }
 
-    /** Rút tiền (BM3, QĐ3) */
+    /** Rút tiền (BM3, QĐ3) – Admin + Giao Dịch Viên */
     @PostMapping("/rut-tien/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
     public ResponseEntity<ApiResponse<?>> rutTien(@PathVariable Integer id,
                                                    @RequestParam BigDecimal soTien) {
         try {
@@ -102,8 +111,9 @@ public class SoTietKiemController {
         }
     }
 
-    /** Xoá sổ – chỉ được xoá sổ đã tất toán. */
+    /** Xoá sổ – chỉ được xoá sổ đã tất toán. Chỉ Admin */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_quan_tri_vien')")
     public ResponseEntity<ApiResponse<String>> xoaSo(@PathVariable Integer id) {
         try {
             soTietKiemService.xoaSo(id);
