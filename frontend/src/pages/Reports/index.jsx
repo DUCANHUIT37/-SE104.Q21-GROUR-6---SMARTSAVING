@@ -31,25 +31,30 @@ export default function FinancialReport() {
     fetchGiaoDich();
   }, []);
 
-  // Tính toán dữ liệu thật từ DB
+  // WARN-05 FIX: Implement real date-range filtering for each tab
   const stats = useMemo(() => {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
     let data = giaoDichData;
-    // Tạm thời bỏ qua filter thời gian phức tạp để focus vào UI, hoặc filter nhẹ
-    
-    // Gửi thêm tiền và Mở sổ tiết kiệm
+    if (activeTab === 'Hôm nay') {
+      data = giaoDichData.filter(g => g.thoiGian && g.thoiGian.startsWith(todayStr));
+    } else if (activeTab === 'Tuần này') {
+      data = giaoDichData.filter(g => g.thoiGian && new Date(g.thoiGian) >= startOfWeek);
+    } else if (activeTab === 'Tháng này') {
+      data = giaoDichData.filter(g => g.thoiGian && g.thoiGian.startsWith(monthStr));
+    }
+    // 'Tất cả' = no filter
+
     const tongThu = data.filter(g => g.loaiGiaoDich === 'gui_them' || g.loaiGiaoDich === 'mo_so')
                         .reduce((a, b) => a + b.soTien, 0);
-    // Rút tiền và Tất toán
     const tongChi = data.filter(g => g.loaiGiaoDich === 'rut_tien' || g.loaiGiaoDich === 'tat_toan')
                         .reduce((a, b) => a + Math.abs(b.soTien), 0);
     const chenhLech = tongThu - tongChi;
-
-    return {
-      tongThu,
-      tongChi,
-      chenhLech,
-      soGiaoDich: data.length
-    };
+    return { tongThu, tongChi, chenhLech, soGiaoDich: data.length };
   }, [activeTab, giaoDichData]);
 
   const chartData = useMemo(() => {
