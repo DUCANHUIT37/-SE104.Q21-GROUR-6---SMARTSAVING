@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.example.BE_SmartSaving;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
