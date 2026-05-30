@@ -25,8 +25,16 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        createTestAccount("teller@smartsaving.vn", "teller123", "Giao Dịch Viên Test", "123456789012", TaiKhoan.QuyenHanEnum.giao_dich_vien);
-        createTestAccount("user@smartsaving.vn", "user123", "Khách Hàng Test", "987654321012", TaiKhoan.QuyenHanEnum.khach_hang);
+        try {
+            createTestAccount("teller@smartsaving.vn", "teller123", "Giao Dịch Viên Test", "123456789012", TaiKhoan.QuyenHanEnum.giao_dich_vien);
+            createTestAccount("user@smartsaving.vn", "user123", "Khách Hàng Test", "987654321012", TaiKhoan.QuyenHanEnum.khach_hang);
+            System.out.println("[DataInitializer] Khởi tạo dữ liệu thành công.");
+        } catch (Exception e) {
+            // Không crash app khi DB chưa sẵn sàng lúc startup
+            // App vẫn chạy được, chỉ bỏ qua bước seed data
+            System.err.println("[DataInitializer] Không thể khởi tạo dữ liệu: " + e.getMessage());
+            System.err.println("[DataInitializer] Kiểm tra kết nối Database và biến môi trường SPRING_DATASOURCE_URL.");
+        }
     }
 
     private void createTestAccount(String email, String password, String name, String cmnd, TaiKhoan.QuyenHanEnum role) {
@@ -35,7 +43,7 @@ public class DataInitializer implements CommandLineRunner {
             nguoiDung.setHoTen(name);
             nguoiDung.setCmnd(cmnd);
             nguoiDung.setDiaChi("Hệ thống khởi tạo");
-            nguoiDung.setLoaiNguoiDung(role == TaiKhoan.QuyenHanEnum.khach_hang ? 
+            nguoiDung.setLoaiNguoiDung(role == TaiKhoan.QuyenHanEnum.khach_hang ?
                 NguoiDung.LoaiNguoiDungEnum.khach_hang : NguoiDung.LoaiNguoiDungEnum.giao_dich_vien);
             nguoiDung = nguoiDungRepository.save(nguoiDung);
 
@@ -45,7 +53,7 @@ public class DataInitializer implements CommandLineRunner {
             taiKhoan.setQuyenHan(role);
             taiKhoan.setNguoiDung(nguoiDung);
             taiKhoanRepository.save(taiKhoan);
-            System.out.println("Created test account: " + email + " with role: " + role);
+            System.out.println("[DataInitializer] Đã tạo tài khoản: " + email + " | Role: " + role);
         }
     }
 }
