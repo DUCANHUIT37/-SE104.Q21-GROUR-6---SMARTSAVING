@@ -1,13 +1,18 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 // ─── Axios Instance ────────────────────────────────────────────────────────────
+// Ưu tiên biến môi trường VITE_API_URL (set trên Vercel dashboard)
+// Fallback về localhost:8080 khi chạy local dev
+const API_BASE_URL = import.meta.env.VITE_API_URL || `http://localhost:8080/api`;
+
 const api = axios.create({
-  baseURL: `http://${window.location.hostname}:8080/api`,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 15000,
 });
+
 
 // ─── Request Interceptor ───────────────────────────────────────────────────────
 // Tự động gắn JWT token vào mọi request
