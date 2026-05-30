@@ -3,6 +3,7 @@ package com.example.BE_SmartSaving.service;
 import com.example.BE_SmartSaving.dto.SoTietKiemDTO;
 import com.example.BE_SmartSaving.model.*;
 import com.example.BE_SmartSaving.repository.SoTietKiemRepository;
+import com.example.BE_SmartSaving.repository.NguoiDungRepository;
 import com.example.BE_SmartSaving.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,15 +14,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import com.example.BE_SmartSaving.repository.TaiKhoanRepository;
-import com.example.BE_SmartSaving.security.SecurityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.stream.Collectors;
+
 
 @Service
 public class SoTietKiemService {
@@ -36,6 +30,9 @@ public class SoTietKiemService {
     private TaiKhoanRepository taiKhoanRepository;
     @Autowired
     private LichSuGiaoDichService lichSuGiaoDichService;
+
+    @Autowired
+    private NguoiDungRepository nguoiDungRepository;
 
     // ─────────────────────────────────────────────────────────────
     //  MAPPER: Entity → DTO
@@ -96,7 +93,26 @@ public class SoTietKiemService {
                     "Số tiền gởi ban đầu tối thiểu là " + min + " VNĐ");
         }
 
-        // 3. Wire FK
+        // 3. Wire FK (Khách Hàng và Loại Tiết Kiệm)
+        if (soTietKiem.getKhachHang() == null || soTietKiem.getKhachHang().getCmnd() == null) {
+            throw new RuntimeException("Thiếu thông tin CMND khách hàng");
+        }
+        
+        String cmnd = soTietKiem.getKhachHang().getCmnd();
+        NguoiDung khachHang = nguoiDungRepository.findByCmnd(cmnd).orElse(null);
+        
+        if (khachHang == null) {
+            // Tự động tạo hồ sơ Khách Hàng mới nếu chưa có
+            khachHang = new NguoiDung();
+            khachHang.setCmnd(cmnd);
+            khachHang.setHoTen(soTietKiem.getKhachHang().getHoTen());
+            khachHang.setDiaChi(soTietKiem.getKhachHang().getDiaChi());
+            khachHang.setSoDienThoai(soTietKiem.getKhachHang().getSoDienThoai());
+            khachHang.setLoaiNguoiDung(NguoiDung.LoaiNguoiDungEnum.khach_hang);
+            khachHang = nguoiDungRepository.save(khachHang);
+        }
+        
+        soTietKiem.setKhachHang(khachHang);
         soTietKiem.setLoaiTietKiem(loai);
 
         // 4. Snapshot lãi suất tại thời điểm mở
@@ -115,10 +131,10 @@ public class SoTietKiemService {
         soTietKiem.setSoDuHienTai(soTietKiem.getSoTienBanDau());
         soTietKiem.setTrangThai(SoTietKiem.TrangThaiEnum.dang_hoat_dong);
 
-        // 7. Tạo mã sổ (STKyyyyMMdd + sequence 3 chữ số)
+        // 7. Tạo mã sổ duy nhất (STKyyyyMMdd + 8 ký tự UUID ngẫu nhiên – thread-safe)
         String prefix = "STK" + ngayMo.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        long count = soTietKiemRepository.count() + 1;
-        soTietKiem.setMaSo(prefix + String.format("%03d", count));
+        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+        soTietKiem.setMaSo(prefix + uniqueSuffix);
 
         SoTietKiem saved = soTietKiemRepository.save(soTietKiem);
 

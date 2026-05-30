@@ -14,12 +14,15 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 /**
  * Báo cáo kế toán (BM5.1, BM5.2).
  * Base URL: /api/baocao
  */
 @RestController
 @RequestMapping("/api/baocao")
+@PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
 public class BaoCaoController {
 
     @Autowired

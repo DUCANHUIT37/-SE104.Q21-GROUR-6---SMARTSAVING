@@ -2,7 +2,9 @@ package com.example.BE_SmartSaving.service;
 
 import com.example.BE_SmartSaving.model.ThamSo;
 import com.example.BE_SmartSaving.repository.ThamSoRepository;
+import com.example.BE_SmartSaving.service.LoaiTietKiemService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 
@@ -11,6 +13,11 @@ public class ThamSoService {
 
     @Autowired
     private ThamSoRepository thamSoRepository;
+
+    /** WARN-02 FIX: Inject LoaiTietKiemService to read real DB rate */
+    @Autowired
+    @Lazy
+    private LoaiTietKiemService loaiTietKiemService;
 
     // ─── Đọc tham số ────────────────────────────────────────────────────
 
@@ -26,9 +33,13 @@ public class ThamSoService {
         return Integer.parseInt(lay("thoi_gian_gui_toi_thieu_ngay", "15"));
     }
 
-    /** Lãi suất không kỳ hạn – lấy từ bảng LOAITIETKIEM, nhưng dùng fallback */
+    /** WARN-02 FIX: Lãi suất không kỳ hạn – đọc từ DB, không hardcode */
     public double layLaiSuatKhongKyHan() {
-        return 0.005; // 0,5%/năm – được set qua LoaiTietKiemService
+        try {
+            return loaiTietKiemService.layKhongKyHan().getLaiSuatNam().doubleValue();
+        } catch (Exception e) {
+            return 0.005; // Fallback an toàn nếu chưa cấu hình DB
+        }
     }
 
     // ─── Tiện ích ────────────────────────────────────────────────────────
