@@ -43,8 +43,8 @@ export default function RootLayout() {
       </div>
 
       {/* --- NỘI DUNG CHÍNH --- */}
-      <main className="md:pl-72 flex-1 h-full overflow-y-auto">
-        <div className="p-4 md:p-8 max-w-7xl mx-auto min-h-full">
+      <main className="md:pl-72 flex-1 h-full overflow-y-auto bg-gray-50/40 dark:bg-[#0d1117]">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto min-h-full page-enter">
           <Outlet />
         </div>
       </main>
