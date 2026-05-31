@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import logoIcon from '../assets/Logo.svg';
@@ -7,6 +7,13 @@ import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  useEffect(() => {
+    const token = localStorage.getItem('jwt_token');
+    if (token) {
+      navigate('/overview', { replace: true });
+    }
+  }, [navigate]);
 
   const [email, setEmail]       = useState('');
   const [matKhau, setMatKhau]   = useState('');
