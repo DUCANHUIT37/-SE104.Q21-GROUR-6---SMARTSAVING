@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { Menu, X } from 'lucide-react';
+import { useAutoLogout } from '../hooks/useAutoLogout';
 
 export default function RootLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+
+  // Kích hoạt auto logout sau 20 phút (1200000ms)
+  useAutoLogout(1200000);
 
   // Đóng menu mobile khi chuyển trang
   useEffect(() => {
