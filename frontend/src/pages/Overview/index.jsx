@@ -37,7 +37,7 @@ function ChartSkeleton({ height = 280 }) {
 // ── Transaction type label ─────────────────────────────────────────────────
 const GD_LABEL = {
   mo_so: { label: 'Mở sổ', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400', icon: ArrowDownLeft },
-  gui_them: { label: 'Gửi thêm', color: 'bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400', icon: ArrowDownLeft },
+  goi_them: { label: 'Gửi thêm', color: 'bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400', icon: ArrowDownLeft },
   rut_tien: { label: 'Rút tiền', color: 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400', icon: ArrowUpRight },
   tat_toan: { label: 'Tất toán', color: 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400', icon: ArrowUpRight },
 };
@@ -101,7 +101,7 @@ export default function Dashboard() {
         const gdDate = new Date(g.thoiGian);
         return gdDate.getMonth() === m.monthVal && gdDate.getFullYear() === m.yearVal;
       });
-      const thuInMonth = gds.filter(g => g.loaiGiaoDich === 'gui_them' || g.loaiGiaoDich === 'mo_so').reduce((sum, g) => sum + g.soTien, 0);
+      const thuInMonth = gds.filter(g => g.loaiGiaoDich === 'goi_them' || g.loaiGiaoDich === 'mo_so').reduce((sum, g) => sum + g.soTien, 0);
       m.tongThu = Math.round(thuInMonth / 1000000);
       cumulative += m.tongThu;
       m.vonGui = cumulative > 0 ? cumulative : Math.round((tongQuan?.tongSoDu || 0) / 1000000);
@@ -267,7 +267,7 @@ export default function Dashboard() {
                 {recentGD.map(gd => {
                   const meta = GD_LABEL[gd.loaiGiaoDich] || { label: gd.loaiGiaoDich, color: 'bg-gray-100 text-gray-600', icon: ArrowUpRight };
                   const Icon = meta.icon;
-                  const isIncome = gd.loaiGiaoDich === 'mo_so' || gd.loaiGiaoDich === 'gui_them';
+                  const isIncome = gd.loaiGiaoDich === 'mo_so' || gd.loaiGiaoDich === 'goi_them';
                   return (
                     <tr key={gd.id || gd.maGiaoDich} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.015] transition-colors">
                       <td className="px-5 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">{(gd.maGiaoDich || '—').slice(0, 12)}…</td>
