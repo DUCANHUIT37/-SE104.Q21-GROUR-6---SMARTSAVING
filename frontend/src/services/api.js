@@ -107,6 +107,8 @@ export const nguoiDungApi = {
     api.post('/nguoidung', data),
   thangCapTeller: (id) =>
     api.put(`/nguoidung/${id}/promote-to-teller`),
+  haQuyenUser: (id) =>
+    api.put(`/nguoidung/${id}/demote-to-user`),
 };
 
 // ─── Báo Cáo API ──────────────────────────────────────────────────────────────

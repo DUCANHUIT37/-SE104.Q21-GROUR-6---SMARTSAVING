@@ -126,4 +126,18 @@ public class NguoiDungController {
             return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
         }
     }
+
+    /** 
+     * Hạ cấp một Giao Dịch Viên thành Khách Hàng – chỉ Admin 
+     */
+    @PutMapping("/{id}/demote-to-user")
+    @PreAuthorize("hasRole('ROLE_quan_tri_vien')")
+    public ResponseEntity<ApiResponse<?>> haQuyenGiaoDichVien(@PathVariable Integer id) {
+        try {
+            NguoiDungDTO dto = nguoiDungService.haQuyenThanhKhachHang(id);
+            return ResponseEntity.ok(ApiResponse.success(dto));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
+        }
+    }
 }

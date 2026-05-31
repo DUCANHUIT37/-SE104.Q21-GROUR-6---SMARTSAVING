@@ -154,4 +154,26 @@ public class NguoiDungService {
 
         return toDTO(nguoiDung);
     }
+
+    @org.springframework.transaction.annotation.Transactional
+    public NguoiDungDTO haQuyenThanhKhachHang(Integer id) {
+        NguoiDung nguoiDung = layEntityTheoId(id);
+        if (nguoiDung.getLoaiNguoiDung() == NguoiDung.LoaiNguoiDungEnum.khach_hang) {
+            throw new RuntimeException("Người dùng này đã là Khách Hàng!");
+        }
+        if (nguoiDung.getLoaiNguoiDung() == NguoiDung.LoaiNguoiDungEnum.quan_tri_vien || nguoiDung.getLoaiNguoiDung() == NguoiDung.LoaiNguoiDungEnum.giam_doc) {
+            throw new RuntimeException("Không thể hạ quyền Quản Trị Viên hoặc Giám Đốc!");
+        }
+        
+        nguoiDung.setLoaiNguoiDung(NguoiDung.LoaiNguoiDungEnum.khach_hang);
+        nguoiDungRepository.save(nguoiDung);
+
+        TaiKhoan taiKhoan = taiKhoanRepository.findByNguoiDungId(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Tài Khoản cho người dùng này!"));
+        
+        taiKhoan.setQuyenHan(TaiKhoan.QuyenHanEnum.khach_hang);
+        taiKhoanRepository.save(taiKhoan);
+
+        return toDTO(nguoiDung);
+    }
 }

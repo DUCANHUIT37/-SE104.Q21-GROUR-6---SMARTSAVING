@@ -63,6 +63,17 @@ export default function Users() {
     }
   };
 
+  const handleDemote = async (u) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn hạ cấp ${u.hoTen} xuống thành Khách Hàng không?`)) return;
+    try {
+      const res = await nguoiDungApi.haQuyenUser(u.id);
+      setUsers(prev => prev.map(x => x.id === u.id ? res.data.data : x));
+      toast.success(`Đã hạ cấp ${u.hoTen} xuống thành Khách Hàng thành công!`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Lỗi hạ cấp người dùng');
+    }
+  };
+
   // WARN-03 FIX: Implement create using POST /api/nguoidung
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -182,6 +193,12 @@ export default function Users() {
                       <button onClick={() => handlePromote(u)}
                         className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-xs font-semibold transition-colors">
                         Nâng quyền Teller
+                      </button>
+                    )}
+                    {u.quyenHan === 'TELLER' && (
+                      <button onClick={() => handleDemote(u)}
+                        className="px-3 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 rounded-lg text-xs font-semibold transition-colors">
+                        Hạ quyền User
                       </button>
                     )}
                   </div>
