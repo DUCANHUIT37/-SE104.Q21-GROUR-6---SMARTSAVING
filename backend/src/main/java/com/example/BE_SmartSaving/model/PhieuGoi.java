@@ -5,6 +5,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * PHIEUGOI – lưu lịch sử các lần gởi thêm tiền vào sổ (BM2).
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "PhieuGoi")
 @Data
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "soTietKiem", "nhanVien"})
 public class PhieuGoi {
 
     @Id

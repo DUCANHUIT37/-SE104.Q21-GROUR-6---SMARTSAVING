@@ -37,7 +37,7 @@ export default function MoSo() {
           thamSoApi.layTatCa()
         ]);
         setLoaiDangApDung(loaiRes.data.data);
-        const minDeposit = thamSoRes.data.data.find(ts => ts.khoa === 'soTienGuiToiThieu')?.giaTri;
+        const minDeposit = thamSoRes.data.data.find(ts => ts.khoa === 'so_tien_gui_toi_thieu')?.giaTri;
         if (minDeposit) setSoTienToiThieu(Number(minDeposit));
       } catch (error) {
         console.error('Lỗi lấy dữ liệu ban đầu', error);

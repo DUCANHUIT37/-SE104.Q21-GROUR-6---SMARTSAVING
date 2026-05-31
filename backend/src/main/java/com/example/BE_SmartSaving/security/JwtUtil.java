@@ -21,8 +21,8 @@ public class JwtUtil {
             : "SmartsavingSecretKey123456789012345678901234567890";
     private final Key key = Keys.hmacShaKeyFor(SECRET_STRING.getBytes());
 
-    // Thời gian hết hạn: 1 giờ (3600000 ms)
-    private static final long EXPIRATION_TIME = 3600000L;
+    // Thời gian hết hạn: 20 phút (1200000 ms)
+    private static final long EXPIRATION_TIME = 1200000L;
 
     public String generateToken(String email, String role, Integer userId) {
         Map<String, Object> claims = new HashMap<>();

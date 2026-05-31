@@ -5,6 +5,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * PHIEURUT – lưu lịch sử các lần rút tiền (BM3).
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "PhieuRut")
 @Data
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "soTietKiem", "nhanVien"})
 public class PhieuRut {
 
     @Id
