@@ -4,20 +4,19 @@ import { UserPlus, CheckCircle, XCircle, Shield, Loader2 } from 'lucide-react';
 import { nguoiDungApi } from '../../services/api';
 import { cn } from '../../lib/utils';
 
-// WARN-03 FIX: Use actual backend role strings as map keys
 const ROLE_COLOR = {
-  ROLE_quan_tri_vien:  'bg-rose-500/10 text-rose-400',
-  ROLE_giao_dich_vien: 'bg-sky-500/10 text-sky-400',
-  ROLE_khach_hang:     'bg-gray-500/10 text-gray-400',
+  ADMIN:  'bg-rose-500/10 text-rose-400',
+  TELLER: 'bg-sky-500/10 text-sky-400',
+  USER:   'bg-gray-500/10 text-gray-400',
 };
 const ROLE_LABEL = {
-  ROLE_quan_tri_vien:  'Quản trị viên',
-  ROLE_giao_dich_vien: 'Giao dịch viên',
-  ROLE_khach_hang:     'Khách hàng',
+  ADMIN:  'Quản trị viên',
+  TELLER: 'Giao dịch viên',
+  USER:   'Khách hàng',
 };
 const ROLE_OPTIONS = [
-  { value: 'ROLE_quan_tri_vien',  label: 'Quản trị viên' },
-  { value: 'ROLE_giao_dich_vien', label: 'Giao dịch viên' },
+  { value: 'ADMIN',  label: 'Quản trị viên' },
+  { value: 'TELLER', label: 'Giao dịch viên' },
 ];
 
 export default function Users() {
@@ -179,7 +178,7 @@ export default function Users() {
                       className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors', u.kichHoat ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400')}>
                       {u.kichHoat ? 'Khóa' : 'Kích hoạt'}
                     </button>
-                    {u.quyenHan === 'ROLE_khach_hang' && (
+                    {u.quyenHan === 'USER' && (
                       <button onClick={() => handlePromote(u)}
                         className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-xs font-semibold transition-colors">
                         Nâng quyền Teller
