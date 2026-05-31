@@ -243,7 +243,7 @@ export default function MoSo() {
                   <datalist id="cmnd-suggestions">
                     {suggestedUsers.map(user => (
                       <option key={user.id} value={user.cmnd}>
-                        {user.hoTen} - {user.soDienThoai || 'Chưa cập nhật SĐT'}
+                        {user.hoTen} - {user.diaChi && user.diaChi !== 'Chưa cập nhật' ? user.diaChi : 'Chưa cập nhật địa chỉ'}
                       </option>
                     ))}
                   </datalist>
