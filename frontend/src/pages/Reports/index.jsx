@@ -12,12 +12,13 @@ import { baoCaoApi } from '../../services/api';
 const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val ?? 0) + ' đ';
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
-const TABS = ['Hôm nay', 'Tháng này', 'Tháng trước', 'Tất cả (Tháng)'];
+const TABS = ['Hôm nay', 'Tháng này', 'Tháng trước'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getTodayStr = () => new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 const getYearMonth = (offset = 0) => {
   const d = new Date();
+  d.setDate(1); // FIX: Set to 1st to prevent overflow on the 31st
   d.setMonth(d.getMonth() + offset);
   return { nam: d.getFullYear(), thang: d.getMonth() + 1 };
 };
