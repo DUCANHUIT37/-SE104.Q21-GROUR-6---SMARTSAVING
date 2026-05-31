@@ -12,7 +12,7 @@ import { baoCaoApi } from '../../services/api';
 const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val ?? 0) + ' đ';
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
-const TABS = ['Hôm nay', 'Tháng này', 'Tháng trước'];
+const TABS = ['Hôm nay', 'Tháng này', 'Tháng trước', 'Tùy chọn'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getTodayStr = () => new Date().toISOString().split('T')[0]; // YYYY-MM-DD
@@ -27,6 +27,11 @@ export default function FinancialReport() {
   const [activeTab, setActiveTab] = useState('Hôm nay');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // Items 3.1, 4.1: Custom period picker state
+  const [customYear, setCustomYear] = useState(new Date().getFullYear());
+  const [customMonth, setCustomMonth] = useState(new Date().getMonth() + 1);
+  const [loaiFilter, setLoaiFilter] = useState('ALL'); // for BM5.2 savings type filter
+  const [availableLoai, setAvailableLoai] = useState([]); // savings types for filter dropdown
 
   // BM5.1 — daily report rows: [{tenLoaiTietKiem, tongThu, tongChi, chenhLech}]
   const [ngayData, setNgayData] = useState([]);
@@ -48,6 +53,17 @@ export default function FinancialReport() {
     return { tongThu: soSoMo, tongChi: soSoDong, chenhLech: soSoMo - soSoDong, soGiaoDich: thangData.length };
   };
 
+  // Items 3.1, 4.1: Helper to get human-readable period label
+  const getPeriodLabel = () => {
+    const today = new Date();
+    const toVN = (d) => d.toLocaleDateString('vi-VN');
+    if (activeTab === 'Hôm nay') return `Ngày ${toVN(today)}`;
+    if (activeTab === 'Tháng này') return `Tháng ${today.getMonth() + 1}/${today.getFullYear()}`;
+    const prev = new Date(); prev.setDate(1); prev.setMonth(prev.getMonth() - 1);
+    if (activeTab === 'Tháng trước') return `Tháng ${prev.getMonth() + 1}/${prev.getFullYear()}`;
+    return `Tháng ${customMonth}/${customYear}`;
+  };
+
   const isNgayTab = activeTab === 'Hôm nay';
   const stats = isNgayTab ? statsFromNgay() : statsFromThang();
 
@@ -57,27 +73,29 @@ export default function FinancialReport() {
     setError(null);
     try {
       if (tab === 'Hôm nay') {
-        // BM5.1: server-side daily aggregation
         const res = await baoCaoApi.theo_ngay(getTodayStr());
         setNgayData(res.data?.data ?? []);
         setThangData([]);
       } else if (tab === 'Tháng này') {
-        // BM5.2: current month
         const { nam, thang } = getYearMonth(0);
         const res = await baoCaoApi.theo_thang(nam, thang);
-        setThangData(res.data?.data ?? []);
+        const data = res.data?.data ?? [];
+        setThangData(data);
+        setAvailableLoai([...new Set(data.map(r => r.tenLoaiTietKiem).filter(Boolean))]);
         setNgayData([]);
       } else if (tab === 'Tháng trước') {
-        // BM5.2: previous month
         const { nam, thang } = getYearMonth(-1);
         const res = await baoCaoApi.theo_thang(nam, thang);
-        setThangData(res.data?.data ?? []);
+        const data = res.data?.data ?? [];
+        setThangData(data);
+        setAvailableLoai([...new Set(data.map(r => r.tenLoaiTietKiem).filter(Boolean))]);
         setNgayData([]);
       } else {
-        // Tất cả: use current year's data (year-to-date) via current month
-        const { nam, thang } = getYearMonth(0);
-        const res = await baoCaoApi.theo_thang(nam, thang);
-        setThangData(res.data?.data ?? []);
+        // Tùy chọn — user-selected month/year
+        const res = await baoCaoApi.theo_thang(customYear, customMonth);
+        const data = res.data?.data ?? [];
+        setThangData(data);
+        setAvailableLoai([...new Set(data.map(r => r.tenLoaiTietKiem).filter(Boolean))]);
         setNgayData([]);
       }
     } catch (err) {
@@ -86,7 +104,7 @@ export default function FinancialReport() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [customYear, customMonth]);
 
   // Fetch on tab change
   useEffect(() => {
@@ -103,7 +121,7 @@ export default function FinancialReport() {
       }))
     // Monthly: one bar per date
     : Object.values(
-        thangData.reduce((acc, r) => {
+        filteredThangData.reduce((acc, r) => {
           const key = r.ngay;
           if (!acc[key]) acc[key] = { ngay: r.ngay?.slice(8, 10) + '/' + r.ngay?.slice(5, 7), thu: 0, chi: 0 };
           acc[key].thu += Number(r.soSoMo ?? 0);
@@ -164,6 +182,11 @@ export default function FinancialReport() {
     }
   ];
 
+  // Item 4.1: Filter thangData by loai if selected
+  const filteredThangData = loaiFilter === 'ALL'
+    ? thangData
+    : thangData.filter(r => r.tenLoaiTietKiem === loaiFilter);
+
   return (
     <div className="space-y-6">
 
@@ -181,6 +204,11 @@ export default function FinancialReport() {
           <p className="text-gray-500 dark:text-gray-400 text-sm">
             Tổng hợp Cashflow (Dòng tiền thuần) — dữ liệu thực từ máy chủ.
           </p>
+          {/* Item 3.1: Current period display badge */}
+          <div className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-full text-xs font-bold text-emerald-700 dark:text-emerald-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            Đang xem: {getPeriodLabel()}
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-4 mb-1">
@@ -200,6 +228,54 @@ export default function FinancialReport() {
               </button>
             ))}
           </div>
+
+          {/* Item 4.1: Custom month/year picker — shown only when Tuy chon tab active */}
+          {activeTab === 'Tùy chọn' && (
+            <div className="flex items-center gap-2 mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Chọn khoảng:</span>
+              <select
+                value={customMonth}
+                onChange={e => { setCustomMonth(Number(e.target.value)); }}
+                className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111827] text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+              >
+                {Array.from({length:12},(_,i)=>(
+                  <option key={i+1} value={i+1}>Tháng {i+1}</option>
+                ))}
+              </select>
+              <select
+                value={customYear}
+                onChange={e => { setCustomYear(Number(e.target.value)); }}
+                className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111827] text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+              >
+                {Array.from({length:5},(_,i)=>{
+                  const y = new Date().getFullYear()-i;
+                  return <option key={y} value={y}>{y}</option>;
+                })}
+              </select>
+              <button
+                onClick={() => fetchReport('Tùy chọn')}
+                disabled={loading}
+                className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50"
+              >
+                Xem
+              </button>
+            </div>
+          )}
+
+          {/* Item 4.1: Savings type filter for BM5.2 */}
+          {!isNgayTab && availableLoai.length > 0 && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Lọc loại TK:</span>
+              <select
+                value={loaiFilter}
+                onChange={e => setLoaiFilter(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111827] text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+              >
+                <option value="ALL">Tất cả loại</option>
+                {availableLoai.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+          )}
 
           {/* Refresh Button */}
           <button
@@ -358,7 +434,7 @@ export default function FinancialReport() {
                             <td className={`px-6 py-3 text-right font-bold ${Number(r.chenhLech) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{formatTien(r.chenhLech)}</td>
                           </tr>
                         ))
-                      : thangData.map((r, i) => (
+                      : filteredThangData.map((r, i) => (
                           <tr key={i} className="hover:bg-gray-50 dark:hover:bg-[#111827] transition-colors">
                             <td className="px-6 py-3 font-medium text-gray-900 dark:text-white">{r.tenLoaiTietKiem}</td>
                             <td className="px-6 py-3 text-center text-gray-500">{r.ngay}</td>

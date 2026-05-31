@@ -97,6 +97,8 @@ export default function Transactions() {
                 <th className="text-left px-4 py-4 font-semibold text-gray-900 dark:text-gray-300">Mã Sổ</th>
                 <th className="text-left px-4 py-4 font-semibold text-gray-900 dark:text-gray-300">Loại Giao Dịch</th>
                 <th className="text-right px-4 py-4 font-semibold text-gray-900 dark:text-gray-300">Số Tiền (VNĐ)</th>
+                <th className="text-right px-4 py-4 font-semibold text-gray-900 dark:text-gray-300 hidden md:table-cell">Số Dư Trước</th>
+                <th className="text-right px-4 py-4 font-semibold text-gray-900 dark:text-gray-300 hidden md:table-cell">Số Dư Sau</th>
                 <th className="text-left px-4 py-4 font-semibold text-gray-900 dark:text-gray-300">Ghi Chú</th>
               </tr>
             </thead>
@@ -137,6 +139,13 @@ export default function Transactions() {
                     )}>
                       {t.uiType === 'WITHDRAWAL' ? '-' : '+'}{formatTien(t.soTien)}
                     </td>
+                    {/* Item 5.1: Số Dư Trước / Số Dư Sau */}
+                    <td className="px-4 py-4 text-right text-gray-500 dark:text-gray-400 text-xs whitespace-nowrap hidden md:table-cell">
+                      {t.soDuTruoc != null ? formatTien(t.soDuTruoc) : '—'}
+                    </td>
+                    <td className="px-4 py-4 text-right text-gray-900 dark:text-white text-xs font-semibold whitespace-nowrap hidden md:table-cell">
+                      {t.soDuSau != null ? formatTien(t.soDuSau) : '—'}
+                    </td>
                     <td className="px-4 py-4">
                       <div className="text-gray-900 dark:text-gray-300 max-w-xs truncate">{t.ghiChu}</div>
                       {/* Neu co lai trong ghi chu, hien thi dong phu (Gia lap tu fakeDb) */}
@@ -150,9 +159,9 @@ export default function Transactions() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
-                    Không tìm thấy giao dịch nào.
-                  </td>
+                    <td colSpan={8} className="px-4 py-12 text-center text-gray-500">
+                      Không tìm thấy giao dịch nào.
+                    </td>
                 </tr>
               )}
             </tbody>

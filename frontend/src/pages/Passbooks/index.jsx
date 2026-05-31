@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import api, { soTietKiemApi, thamSoApi } from '../../services/api';
+import { Calculator } from 'lucide-react';
 // Removed fakeDb imports as they are no longer needed for mock transactions
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
@@ -58,6 +59,8 @@ export default function Passbooks() {
   const [amount, setAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionError, setActionError] = useState('');
+  // Item 7.1: Real-time withdrawal calculation state
+  const [rutTienCalc, setRutTienCalc] = useState(null); // null=idle, {loading}=fetching, {...data}=done
 
   // ─── Fetch dữ liệu từ Backend ─────────────────────────────────────────────────
   const fetchDanhSach = useCallback(async () => {
@@ -228,15 +231,33 @@ export default function Passbooks() {
     }
   };
 
-  const openActionModal = (so, type) => {
+  const openActionModal = async (so, type) => {
     setActionModal({ isOpen: true, type, so });
     setAmount(type === 'WITHDRAWAL' && so.kyHanThang > 0 ? so.soDuHienTai.toString() : '');
     setActionError('');
+    setRutTienCalc(null);
+
+    // Item 7.1: Auto-fetch interest calculation for withdrawal
+    if (type === 'WITHDRAWAL') {
+      setRutTienCalc({ loading: true });
+      try {
+        const res = await soTietKiemApi.tinhToanRut(so.id);
+        const calc = res.data?.data;
+        setRutTienCalc(calc);
+        // Pre-fill amount with full balance for fixed-term or calculated full withdrawal
+        if (so.kyHanThang > 0) {
+          setAmount(String(calc?.soTienGoc ?? so.soDuHienTai));
+        }
+      } catch {
+        setRutTienCalc({ error: 'Không tải được thông tin tính lãi. Vẫn có thể tiếp tục.' });
+      }
+    }
   };
 
   const closeActionModal = () => {
     setActionModal({ isOpen: false, type: null, so: null });
     setAmount('');
+    setRutTienCalc(null);
   };
 
   const handleTransaction = async (e) => {
@@ -518,7 +539,8 @@ export default function Passbooks() {
 
             {/* Modal Body */}
             <div className="p-8">
-              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 mb-6 border border-gray-100 dark:border-gray-800 flex flex-col gap-2 text-sm">
+              {/* Thông tin cơ bản sổ */}
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 mb-4 border border-gray-100 dark:border-gray-800 flex flex-col gap-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Mã Số:</span>
                   <span className="font-bold text-gray-900 dark:text-white">#{actionModal.so.maSo.slice(-6)}</span>
@@ -537,7 +559,61 @@ export default function Passbooks() {
                 </div>
               </div>
 
-              {actionModal.type === "WITHDRAWAL" && actionModal.so.kyHanThang > 0 && (
+              {/* Item 7.1: Real-time interest breakdown for WITHDRAWAL */}
+              {actionModal.type === 'WITHDRAWAL' && (
+                <div className="mb-4">
+                  {rutTienCalc?.loading ? (
+                    <div className="flex items-center justify-center gap-2 py-4 text-gray-500 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
+                      Đang tính lãi suất...
+                    </div>
+                  ) : rutTienCalc?.error ? (
+                    <div className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 border border-amber-200 dark:border-amber-800">
+                      ⚠️ {rutTienCalc.error}
+                    </div>
+                  ) : rutTienCalc && !rutTienCalc.coTheRut ? (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-400 font-medium">
+                      🚫 {rutTienCalc.lyDoKhongDuocRut}
+                    </div>
+                  ) : rutTienCalc && rutTienCalc.coTheRut ? (
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-2xl p-4 border border-orange-200 dark:border-orange-800 space-y-2 text-sm">
+                      <div className="flex items-center gap-2 font-bold text-orange-700 dark:text-orange-300 mb-3">
+                        <Calculator className="w-4 h-4" />
+                        Tính toán lãi suất tạm tính
+                      </div>
+                      {rutTienCalc.rutTruocHan && (
+                        <div className="text-xs text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 rounded-lg px-3 py-2 mb-2">
+                          ⚠️ Rút trước ngày đáo hạn ({formatNgay(rutTienCalc.ngayDaoHan)}) — Áp dụng lãi suất Không Kỳ Hạn
+                        </div>
+                      )}
+                      <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                        <span>Tiền gốc gửi vào:</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">{formatTien(rutTienCalc.soTienGoc)}</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                        <span>Số ngày gửi:</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">{rutTienCalc.soNgayGui} ngày</span>
+                      </div>
+                      <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                        <span>Lãi suất áp dụng:</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          {parseFloat((rutTienCalc.laiSuatApDung * 100).toFixed(3))}%/năm
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                        <span>Tiền lãi tích lũy:</span>
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">+{formatTien(rutTienCalc.tienLai)}</span>
+                      </div>
+                      <div className="border-t border-orange-200 dark:border-orange-700 pt-2 flex justify-between">
+                        <span className="font-bold text-gray-900 dark:text-white">TỔNG THỰC NHẬN TẠI QUẦY:</span>
+                        <span className="font-black text-lg text-orange-600 dark:text-orange-300">{formatTien(rutTienCalc.tongThucNhan)}</span>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+              {actionModal.type === "WITHDRAWAL" && actionModal.so.kyHanThang > 0 && (actionModal.so.ngayDaoHan ? new Date() < new Date(actionModal.so.ngayDaoHan) : false) && (
                 <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border border-amber-200 dark:border-amber-800 flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
                   <p className="text-xs text-amber-800 dark:text-amber-400 leading-relaxed">
@@ -581,7 +657,7 @@ export default function Passbooks() {
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || (actionModal.type === 'WITHDRAWAL' && rutTienCalc && !rutTienCalc.loading && !rutTienCalc.coTheRut && !rutTienCalc.error)}
                     className={cn(
                       "flex-[1.5] px-6 py-4 text-white rounded-2xl font-bold transition-all shadow-lg flex items-center justify-center gap-2",
                       actionModal.type === 'DEPOSIT' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-orange-600 hover:bg-orange-700'

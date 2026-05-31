@@ -318,6 +318,34 @@ export default function MoSo() {
                     ))}
                   </select>
                 </div>
+
+                {/* Item 1.1: Ngày mở sổ read-only */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ngày mở sổ</label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={new Date().toLocaleDateString('vi-VN')}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+                  />
+                  <p className="text-xs text-gray-400">Tự động lấy ngày hệ thống</p>
+                </div>
+
+                {/* Lãi suất hiển thị tự động khi chọn kỳ hạn */}
+                {loaiDaChon && (
+                  <div className="sm:col-span-2 space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Lãi suất áp dụng</label>
+                    <div className="flex items-center gap-3 px-4 py-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-lg">
+                      <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                        {parseFloat((loaiDaChon.laiSuatNam * 100).toFixed(3))}%
+                      </span>
+                      <span className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">/năm</span>
+                      <span className="ml-auto text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 px-2 py-1 rounded-full font-semibold">
+                        {loaiDaChon.tenLoai}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -200,6 +200,18 @@ public class SoTietKiemController {
         }
     }
 
+    /** Tính toán rút tiền DRY-RUN — không ghi DB, chỉ trả về kết quả ước tính */
+    @GetMapping("/{id}/tinh-toan-rut")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
+    public ResponseEntity<ApiResponse<?>> tinhToanRut(@PathVariable Integer id) {
+        try {
+            var result = phieuRutService.tinhToanRutThuan(id);
+            return ResponseEntity.ok(ApiResponse.success(result));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
+        }
+    }
+
     /** Rút tiền (BM3, QĐ3) – Admin + Giao Dịch Viên */
     @PostMapping("/rut-tien/{id}")
     @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")

@@ -73,6 +73,8 @@ export const soTietKiemApi = {
     api.delete(`/sotietkiem/${id}`),
   layTheoKhachHang: (khachHangId) =>
     api.get(`/sotietkiem/khach-hang/${khachHangId}`),
+  tinhToanRut: (id) =>
+    api.get(`/sotietkiem/${id}/tinh-toan-rut`),
 };
 
 // ─── Loại Tiết Kiệm API ───────────────────────────────────────────────────────

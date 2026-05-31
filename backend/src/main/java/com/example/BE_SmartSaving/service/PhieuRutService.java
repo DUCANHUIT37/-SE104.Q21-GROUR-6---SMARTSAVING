@@ -157,4 +157,74 @@ public class PhieuRutService {
 
         return saved;
     }
-}
+
+    /**
+     * Tính toán rút tiền (DRY-RUN) — không ghi DB, chỉ trả về kết quả tính toán.
+     * Dùng cho frontend hiển thị preview trước khi Teller xác nhận.
+     * Endpoint: GET /api/sotietkiem/{id}/tinh-toan-rut
+     */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public com.example.BE_SmartSaving.dto.TinhToanRutDTO tinhToanRutThuan(Integer soTietKiemId) {
+        SoTietKiem stk = soTietKiemRepository.findById(soTietKiemId)
+                .orElseThrow(() -> new RuntimeException("Sổ không tồn tại!"));
+
+        if (stk.getTrangThai() == SoTietKiem.TrangThaiEnum.da_tat_toan) {
+            return com.example.BE_SmartSaving.dto.TinhToanRutDTO.builder()
+                    .soTietKiemId(soTietKiemId)
+                    .coTheRut(false)
+                    .lyDoKhongDuocRut("Sổ đã tất toán, không thể rút tiền!")
+                    .build();
+        }
+
+        LoaiTietKiem loai = loaiTietKiemService.layTheoIdEntity(stk.getLoaiTietKiem().getId());
+        LocalDate homNay = LocalDate.now();
+        long soNgayGui = ChronoUnit.DAYS.between(stk.getNgayMo(), homNay);
+        BigDecimal soDuHienTai = stk.getSoDuHienTai();
+
+        BigDecimal laiSuatApDung;
+        boolean rutTruocHan = false;
+        boolean coTheRut = true;
+        String lyDo = null;
+
+        if (loai.getKyHanThang() == 0) {
+            // Không kỳ hạn
+            int soNgayToiThieu = thamSoService.layThoiGianGuiToiThieu();
+            if (soNgayGui < soNgayToiThieu) {
+                coTheRut = false;
+                lyDo = "Chưa đủ " + soNgayToiThieu + " ngày để rút tiền! (Đã gởi " + soNgayGui + " ngày)";
+            }
+            laiSuatApDung = loai.getLaiSuatNam();
+        } else {
+            // Có kỳ hạn
+            boolean daQuaHan = stk.getNgayDaoHan() != null && !homNay.isBefore(stk.getNgayDaoHan());
+            if (daQuaHan) {
+                laiSuatApDung = stk.getLaiSuatMoSo();
+            } else {
+                laiSuatApDung = loaiTietKiemService.layKhongKyHan().getLaiSuatNam();
+                rutTruocHan = true;
+            }
+        }
+
+        // Tính tiền lãi
+        BigDecimal tienLai = soDuHienTai
+                .multiply(laiSuatApDung)
+                .multiply(BigDecimal.valueOf(soNgayGui))
+                .divide(BigDecimal.valueOf(365), 0, java.math.RoundingMode.HALF_UP);
+
+        BigDecimal tongThucNhan = soDuHienTai.add(tienLai);
+
+        return com.example.BE_SmartSaving.dto.TinhToanRutDTO.builder()
+                .soTietKiemId(soTietKiemId)
+                .soTienGoc(soDuHienTai)
+                .soNgayGui(soNgayGui)
+                .laiSuatApDung(laiSuatApDung)
+                .rutTruocHan(rutTruocHan)
+                .tienLai(tienLai)
+                .tongThucNhan(tongThucNhan)
+                .coTheRut(coTheRut)
+                .lyDoKhongDuocRut(lyDo)
+                .ngayDaoHan(stk.getNgayDaoHan() != null ? stk.getNgayDaoHan().toString() : null)
+                .loaiKyHan(loai.getTenLoai())
+                .build();
+    }
+}
