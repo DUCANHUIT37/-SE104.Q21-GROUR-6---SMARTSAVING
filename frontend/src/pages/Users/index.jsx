@@ -185,10 +185,12 @@ export default function Users() {
                 </td>
                 <td className="px-4 py-3.5">
                   <div className="flex items-center gap-2">
-                    <button onClick={() => handleToggle(u)}
-                      className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors', u.kichHoat ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400')}>
-                      {u.kichHoat ? 'Khóa' : 'Kích hoạt'}
-                    </button>
+                    {u.quyenHan !== 'ADMIN' && (
+                      <button onClick={() => handleToggle(u)}
+                        className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors', u.kichHoat ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400')}>
+                        {u.kichHoat ? 'Khóa' : 'Kích hoạt'}
+                      </button>
+                    )}
                     {u.quyenHan === 'USER' && (
                       <button onClick={() => handlePromote(u)}
                         className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-xs font-semibold transition-colors">
