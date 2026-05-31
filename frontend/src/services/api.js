@@ -132,5 +132,3 @@ export const thamSoApi = {
   capNhat: (khoa, giaTriMoi, lyDo = 'Cập nhật qua giao diện Admin') =>
     api.put(`/thamso/${khoa}`, { giaTriMoi: String(giaTriMoi), lyDo }),
 };
-
-export default api;
