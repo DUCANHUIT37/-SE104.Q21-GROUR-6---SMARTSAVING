@@ -83,7 +83,9 @@ public class AuthController {
             nguoiDung.setHoTen(request.getHoTen());
             nguoiDung.setCmnd(request.getCmnd());
             nguoiDung.setDiaChi("Chưa cập nhật");
+            nguoiDung.setSoDienThoai("");
             nguoiDung.setLoaiNguoiDung(NguoiDung.LoaiNguoiDungEnum.khach_hang);
+            nguoiDung.setTaoLuc(java.time.LocalDateTime.now());
             nguoiDung = nguoiDungRepository.save(nguoiDung);
 
             TaiKhoan taiKhoan = new TaiKhoan();
@@ -91,6 +93,7 @@ public class AuthController {
             taiKhoan.setMatKhauHash(passwordEncoder.encode(request.getMatKhau()));
             taiKhoan.setQuyenHan(TaiKhoan.QuyenHanEnum.khach_hang);
             taiKhoan.setKichHoat(true);
+            taiKhoan.setTaoLuc(java.time.LocalDateTime.now());
             taiKhoan.setNguoiDung(nguoiDung);
             taiKhoanRepository.save(taiKhoan);
 
