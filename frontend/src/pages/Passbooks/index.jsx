@@ -6,7 +6,7 @@ import {
   ChevronUp, ChevronDown, ArrowUpDown, RefreshCw, WifiOff
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { soTietKiemApi } from '../../services/api';
+import { soTietKiemApi, thamSoApi } from '../../services/api';
 // Removed fakeDb imports as they are no longer needed for mock transactions
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
@@ -47,6 +47,7 @@ export default function Passbooks() {
   const [danhSach, setDanhSach] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [minDepositAmount, setMinDepositAmount] = useState(100000);
 
   // ─── Sorting State ───────────────────────────────────────────────────────────
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
@@ -88,6 +89,14 @@ export default function Passbooks() {
   useEffect(() => {
     fetchDanhSach();
   }, [fetchDanhSach, user, isKhachHang]);
+
+  // FLAG 2 FIX: Fetch real minimum deposit-add amount from backend config
+  useEffect(() => {
+    thamSoApi.layTatCa().then(res => {
+      const minVal = res.data?.data?.find(ts => ts.khoa === 'so_tien_gui_them_toi_thieu')?.giaTri;
+      if (minVal) setMinDepositAmount(Number(minVal));
+    }).catch(() => {}); // Fallback to default 100000 on error
+  }, []);
 
   const filtered = useMemo(() => {
     return danhSach.filter(so => {
@@ -241,6 +250,12 @@ export default function Passbooks() {
 
     try {
       const val = Number(amount);
+      // FLAG 2 FIX: Validate minimum deposit amount on FE before calling API
+      if (type === 'DEPOSIT' && val < minDepositAmount) {
+        setActionError(`Số tiền gửi thêm tối thiểu là ${new Intl.NumberFormat('vi-VN').format(minDepositAmount)} ₫`);
+        setIsSubmitting(false);
+        return;
+      }
       if (type === 'DEPOSIT') {
         await soTietKiemApi.guiThemTien(so.id, val);
         toast.success('Gửi thêm tiền thành công!');
