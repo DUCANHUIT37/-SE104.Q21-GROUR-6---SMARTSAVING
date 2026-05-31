@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   nguoiDungApi, loaiTietKiemApi, thamSoApi, soTietKiemApi
 } from '../../services/api';
+import { cn } from '../../lib/utils';
 
 const formatTien = (val) => {
   if (!val) return '';
