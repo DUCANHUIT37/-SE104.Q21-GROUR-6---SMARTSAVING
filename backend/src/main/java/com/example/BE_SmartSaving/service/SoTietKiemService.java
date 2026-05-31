@@ -150,6 +150,7 @@ public class SoTietKiemService {
         return toDTO(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<SoTietKiemDTO> layTatCaSo() {
         return soTietKiemRepository.findAll()
                 .stream()
@@ -157,6 +158,7 @@ public class SoTietKiemService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public SoTietKiemDTO laySoTheoId(Integer id) {
         SoTietKiem stk = soTietKiemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(
@@ -171,6 +173,7 @@ public class SoTietKiemService {
                         "Không tìm thấy sổ tiết kiệm ID: " + id));
     }
 
+    @Transactional(readOnly = true)
     public List<SoTietKiemDTO> timKiem(String tuKhoa) {
         return soTietKiemRepository.timKiem(tuKhoa)
                 .stream()
@@ -178,6 +181,7 @@ public class SoTietKiemService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<SoTietKiemDTO> laySoTheoKhachHang(Integer khachHangId) {
         return soTietKiemRepository.findByKhachHangId(khachHangId)
                 .stream()
