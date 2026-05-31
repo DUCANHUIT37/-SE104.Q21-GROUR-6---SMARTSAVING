@@ -22,6 +22,7 @@ export default function MoSo() {
     loaiTietKiemId: '', soTienBanDau: '', soDienThoai: ''
   });
   const [khachHangTimThay, setKhachHangTimThay] = useState(null);
+  const [cmndNotFound, setCmndNotFound] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [success, setSuccess] = useState(null);
@@ -60,14 +61,17 @@ export default function MoSo() {
       const found = res.data.data;
       if (found) {
         setKhachHangTimThay(found);
+        setCmndNotFound(false);
         setForm(f => ({ ...f, hoTen: found.hoTen, diaChi: found.diaChi || '', soDienThoai: found.soDienThoai || '' }));
-        toast.success(`✅ Khách hàng cũ: ${found.hoTen}`);
+        toast.success(`✅ Tìm thấy khách hàng: ${found.hoTen}`);
       }
     } catch (e) {
-      // 404 = Khách hàng mới, không phải lỗi thật sự
       if (e.response?.status === 404) {
         setKhachHangTimThay(null);
-        // Giữ nguyên form để Teller nhập thông tin mới
+        setCmndNotFound(true);
+        // Reset form for safety
+        setForm(f => ({ ...f, hoTen: '', diaChi: '', soDienThoai: '' }));
+        toast.error("Khách hàng chưa có tài khoản hệ thống. Hãy đăng ký trước!");
       } else {
         toast.error('Lỗi tra cứu CMND. Vui lòng thử lại.');
         console.error('CMND lookup error:', e);
@@ -76,6 +80,10 @@ export default function MoSo() {
   };
 
   const handleChange = (e) => {
+    if (e.target.name === 'cmnd') {
+      setKhachHangTimThay(null);
+      setCmndNotFound(false);
+    }
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -156,7 +164,6 @@ export default function MoSo() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      {/* Header */}
       <div>
         <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center">
           <PiggyBank className="w-8 h-8 mr-3 text-emerald-500" />
@@ -166,7 +173,6 @@ export default function MoSo() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Form Nhập Liệu */}
         <div className="md:col-span-2 bg-white dark:bg-[#1f2937] border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* THÔNG TIN KHÁCH HÀNG */}
@@ -193,7 +199,11 @@ export default function MoSo() {
                   <input
                     type="text" name="hoTen" required
                     value={form.hoTen} onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                    disabled={!!khachHangTimThay}
+                    className={cn(
+                      "w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg outline-none transition focus:ring-2 focus:ring-emerald-500",
+                      khachHangTimThay ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-70 text-gray-700 dark:text-gray-400" : "bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                    )}
                     placeholder="VD: NGUYEN VAN A"
                   />
                 </div>
@@ -202,7 +212,11 @@ export default function MoSo() {
                   <input
                     type="text" name="diaChi" required
                     value={form.diaChi} onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                    disabled={!!khachHangTimThay}
+                    className={cn(
+                      "w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg outline-none transition focus:ring-2 focus:ring-emerald-500",
+                      khachHangTimThay ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-70 text-gray-700 dark:text-gray-400" : "bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                    )}
                     placeholder="VD: Số 123, Phường A, Quận B"
                   />
                 </div>
