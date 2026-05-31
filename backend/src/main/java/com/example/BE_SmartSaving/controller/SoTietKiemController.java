@@ -72,24 +72,34 @@ public class SoTietKiemController {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Danh Sách Sổ Tiết Kiệm");
 
-            // Header Style
+            // Header Style (Bold, Center, Pale Blue Background, Thin Borders)
             CellStyle headerStyle = workbook.createCellStyle();
             Font headerFont = workbook.createFont();
             headerFont.setBold(true);
             headerStyle.setFont(headerFont);
-            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillForegroundColor(IndexedColors.PALE_BLUE.getIndex());
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
             headerStyle.setBorderBottom(BorderStyle.THIN);
             headerStyle.setBorderTop(BorderStyle.THIN);
             headerStyle.setBorderLeft(BorderStyle.THIN);
             headerStyle.setBorderRight(BorderStyle.THIN);
 
-            // Row Style
+            // Row Style (General Text, Thin Borders)
             CellStyle rowStyle = workbook.createCellStyle();
             rowStyle.setBorderBottom(BorderStyle.THIN);
             rowStyle.setBorderTop(BorderStyle.THIN);
             rowStyle.setBorderLeft(BorderStyle.THIN);
             rowStyle.setBorderRight(BorderStyle.THIN);
+
+            // Number/Currency Style (Thousands Separator, Thin Borders)
+            CellStyle numberStyle = workbook.createCellStyle();
+            DataFormat format = workbook.createDataFormat();
+            numberStyle.setDataFormat(format.getFormat("#,##0"));
+            numberStyle.setBorderBottom(BorderStyle.THIN);
+            numberStyle.setBorderTop(BorderStyle.THIN);
+            numberStyle.setBorderLeft(BorderStyle.THIN);
+            numberStyle.setBorderRight(BorderStyle.THIN);
 
             // Headers
             String[] headers = {"Mã Sổ", "Tên Khách Hàng", "CMND/CCCD", "Số Dư (VNĐ)", "Kỳ Hạn", "Lãi Suất (%)", "Ngày Mở Sổ", "Ngày Đáo Hạn", "Trạng Thái"};
@@ -108,9 +118,19 @@ public class SoTietKiemController {
                 Cell c0 = row.createCell(0); c0.setCellValue(dto.getMaSo()); c0.setCellStyle(rowStyle);
                 Cell c1 = row.createCell(1); c1.setCellValue(dto.getKhachHangTen() != null ? dto.getKhachHangTen() : ""); c1.setCellStyle(rowStyle);
                 Cell c2 = row.createCell(2); c2.setCellValue(dto.getKhachHangCmnd() != null ? dto.getKhachHangCmnd() : ""); c2.setCellStyle(rowStyle);
-                Cell c3 = row.createCell(3); c3.setCellValue(dto.getSoDuHienTai() != null ? dto.getSoDuHienTai().doubleValue() : 0); c3.setCellStyle(rowStyle);
+                
+                // Áp dụng định dạng tiền tệ (Thousands separator) cho cột Số Dư (VNĐ)
+                Cell c3 = row.createCell(3); 
+                c3.setCellValue(dto.getSoDuHienTai() != null ? dto.getSoDuHienTai().doubleValue() : 0); 
+                c3.setCellStyle(numberStyle);
+                
                 Cell c4 = row.createCell(4); c4.setCellValue(dto.getLoaiTietKiemTen() != null ? dto.getLoaiTietKiemTen() : ""); c4.setCellStyle(rowStyle);
-                Cell c5 = row.createCell(5); c5.setCellValue(dto.getLaiSuatMoSo() != null ? dto.getLaiSuatMoSo().doubleValue() : 0); c5.setCellStyle(rowStyle);
+                
+                // Áp dụng định dạng số cho cột Lãi suất
+                Cell c5 = row.createCell(5); 
+                c5.setCellValue(dto.getLaiSuatMoSo() != null ? dto.getLaiSuatMoSo().doubleValue() : 0); 
+                c5.setCellStyle(numberStyle);
+                
                 Cell c6 = row.createCell(6); c6.setCellValue(dto.getNgayMo() != null ? dto.getNgayMo().toString() : ""); c6.setCellStyle(rowStyle);
                 Cell c7 = row.createCell(7); c7.setCellValue(dto.getNgayDaoHan() != null ? dto.getNgayDaoHan().toString() : ""); c7.setCellStyle(rowStyle);
                 
