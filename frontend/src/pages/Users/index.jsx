@@ -22,7 +22,7 @@ const ROLE_OPTIONS = [
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ hoTen: '', cmnd: '', soDienThoai: '', diaChi: '', loaiNguoiDung: 'nhan_vien' });
+  const [form, setForm] = useState({ hoTen: '', cmnd: '', soDienThoai: '', diaChi: '', loaiNguoiDung: 'nhan_vien', email: '', matKhau: '' });
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -81,6 +81,10 @@ export default function Users() {
       toast.error('Vui lòng nhập đủ Họ Tên và CMND/CCCD');
       return;
     }
+    if (!form.email || !form.matKhau) {
+      toast.error('Vui lòng nhập Email và Mật khẩu');
+      return;
+    }
     setSubmitting(true);
     try {
       await nguoiDungApi.taoMoi({
@@ -89,9 +93,11 @@ export default function Users() {
         soDienThoai: form.soDienThoai,
         diaChi: form.diaChi,
         loaiNguoiDung: form.loaiNguoiDung,
+        email: form.email,
+        matKhau: form.matKhau,
       });
       toast.success(`Đã tạo hồ sơ ${form.hoTen} thành công!`);
-      setForm({ hoTen: '', cmnd: '', soDienThoai: '', diaChi: '', loaiNguoiDung: 'nhan_vien' });
+      setForm({ hoTen: '', cmnd: '', soDienThoai: '', diaChi: '', loaiNguoiDung: 'nhan_vien', email: '', matKhau: '' });
       setShowForm(false);
       fetchUsers();
     } catch (error) {
@@ -132,6 +138,16 @@ export default function Users() {
                   className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111827] text-gray-900 dark:text-white text-sm outline-none focus:border-emerald-500 transition-all" />
               </div>
             ))}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email *</label>
+              <input type="email" value={form.email || ''} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="admin@smartsaving.vn" required
+                className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111827] text-gray-900 dark:text-white text-sm outline-none focus:border-emerald-500 transition-all" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mật khẩu *</label>
+              <input type="password" value={form.matKhau || ''} onChange={e => setForm(f => ({ ...f, matKhau: e.target.value }))} placeholder="••••••••" required
+                className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111827] text-gray-900 dark:text-white text-sm outline-none focus:border-emerald-500 transition-all" />
+            </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Loại</label>
               <select value={form.loaiNguoiDung} onChange={e => setForm(f => ({ ...f, loaiNguoiDung: e.target.value }))}

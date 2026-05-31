@@ -21,6 +21,9 @@ public class NguoiDungService {
     @Autowired
     private TaiKhoanRepository taiKhoanRepository;
 
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     // ─────────────────────────────────────────────────────────────
     //  MAPPER: Entity → DTO
     //  Ánh xạ loaiNguoiDung (enum nội bộ) → quyenHan (string cho FE)
@@ -121,11 +124,47 @@ public class NguoiDungService {
                 .collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public NguoiDungDTO taoMoi(NguoiDung nguoiDung) {
         if (nguoiDungRepository.existsByCmnd(nguoiDung.getCmnd())) {
             throw new RuntimeException("CMND/CCCD đã tồn tại trong hệ thống!");
         }
-        return toDTO(nguoiDungRepository.save(nguoiDung));
+        
+        // Save NguoiDung profile first
+        NguoiDung savedNguoiDung = nguoiDungRepository.save(nguoiDung);
+
+        // If email is provided, create corresponding TaiKhoan record
+        if (nguoiDung.getEmail() != null && !nguoiDung.getEmail().trim().isEmpty()) {
+            String cleanEmail = nguoiDung.getEmail().trim();
+            if (taiKhoanRepository.existsByEmail(cleanEmail)) {
+                throw new RuntimeException("Email đã tồn tại trong hệ thống!");
+            }
+            
+            if (nguoiDung.getMatKhau() == null || nguoiDung.getMatKhau().trim().isEmpty()) {
+                throw new RuntimeException("Mật khẩu không được để trống!");
+            }
+            
+            TaiKhoan taiKhoan = new TaiKhoan();
+            taiKhoan.setEmail(cleanEmail);
+            taiKhoan.setMatKhauHash(passwordEncoder.encode(nguoiDung.getMatKhau()));
+            
+            // Map loaiNguoiDungEnum to QuyenHanEnum
+            TaiKhoan.QuyenHanEnum quyenHan = switch (savedNguoiDung.getLoaiNguoiDung()) {
+                case quan_tri_vien -> TaiKhoan.QuyenHanEnum.quan_tri_vien;
+                case giao_dich_vien -> TaiKhoan.QuyenHanEnum.giao_dich_vien;
+                case giam_doc -> TaiKhoan.QuyenHanEnum.giam_doc;
+                default -> TaiKhoan.QuyenHanEnum.khach_hang;
+            };
+            
+            taiKhoan.setQuyenHan(quyenHan);
+            taiKhoan.setKichHoat(true);
+            taiKhoan.setNguoiDung(savedNguoiDung);
+            taiKhoan.setTaoLuc(java.time.LocalDateTime.now());
+            
+            taiKhoanRepository.save(taiKhoan);
+        }
+        
+        return toDTO(savedNguoiDung);
     }
 
     public NguoiDungDTO capNhat(Integer id, NguoiDung thongTinMoi) {

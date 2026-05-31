@@ -32,7 +32,25 @@ public class NguoiDung {
     @Column(name = "tao_luc", nullable = false)
     private LocalDateTime taoLuc = LocalDateTime.now();
 
+    @Transient
+    private String email;
+
+    @Transient
+    private String matKhau;
+
     public enum LoaiNguoiDungEnum {
-        khach_hang, giao_dich_vien, quan_tri_vien, giam_doc
+        khach_hang, giao_dich_vien, quan_tri_vien, giam_doc;
+
+        @com.fasterxml.jackson.annotation.JsonCreator
+        public static LoaiNguoiDungEnum fromValue(String value) {
+            if (value == null) return null;
+            return switch (value.toLowerCase()) {
+                case "nhan_vien", "giao_dich_vien", "teller" -> giao_dich_vien;
+                case "khach_hang", "user" -> khach_hang;
+                case "quan_tri_vien", "admin" -> quan_tri_vien;
+                case "giam_doc" -> giam_doc;
+                default -> throw new IllegalArgumentException("Unknown role: " + value);
+            };
+        }
     }
 }
