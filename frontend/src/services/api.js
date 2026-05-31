@@ -100,6 +100,11 @@ export const nguoiDungApi = {
   // BUG-01 FIX: Targeted CMND lookup instead of fetching all customers
   layTheoCmnd: (cmnd) =>
     api.get(`/nguoidung/cmnd/${cmnd}`),
+  timKiemCmnd: async (query) => {
+    const res = await api.get('/nguoidung/khach-hang');
+    const filtered = res.data.data.filter(u => u.cmnd && u.cmnd.includes(query));
+    return { data: { data: filtered } };
+  },
   // WARN-03 FIX: Add update and create endpoints
   capNhat: (id, data) =>
     api.put(`/nguoidung/${id}`, data),

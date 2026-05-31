@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { PiggyBank, CalendarDays, ReceiptText, ShieldCheck, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
@@ -27,6 +27,9 @@ export default function MoSo() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [success, setSuccess] = useState(null);
+
+  const [suggestedUsers, setSuggestedUsers] = useState([]);
+  const debounceTimeout = useRef(null);
 
   const [loaiDangApDung, setLoaiDangApDung] = useState([]);
   const [soTienToiThieu, setSoTienToiThieu] = useState(1000000);
@@ -85,11 +88,49 @@ export default function MoSo() {
     }
   };
 
-  const handleChange = (e) => {
-    if (e.target.name === 'cmnd') {
-      setKhachHangTimThay(null);
-      setCmndNotFound(false);
+  const handleCmndSelect = (user) => {
+    setKhachHangTimThay(user);
+    setCmndNotFound(false);
+    setForm(f => ({ 
+      ...f, 
+      cmnd: user.cmnd,
+      hoTen: user.hoTen, 
+      diaChi: (user.diaChi && user.diaChi !== "Chưa cập nhật") ? user.diaChi : '', 
+      soDienThoai: user.soDienThoai || '' 
+    }));
+    toast.success(`✅ Tìm thấy khách hàng: ${user.hoTen}`);
+  };
+
+  const handleCmndChange = (e) => {
+    const value = e.target.value;
+    
+    setForm(prev => ({ ...prev, cmnd: value }));
+    setKhachHangTimThay(null);
+    setCmndNotFound(false);
+
+    const exactMatch = suggestedUsers.find(u => u.cmnd === value);
+    if (exactMatch) {
+      handleCmndSelect(exactMatch);
+      return;
     }
+
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+
+    if (value.trim().length >= 3) {
+      debounceTimeout.current = setTimeout(async () => {
+        try {
+          const res = await nguoiDungApi.timKiemCmnd(value.trim()); 
+          setSuggestedUsers(res.data.data || []);
+        } catch (error) {
+          console.error("Lỗi khi tải danh sách gợi ý CMND:", error);
+        }
+      }, 500);
+    } else {
+      setSuggestedUsers([]);
+    }
+  };
+
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -192,10 +233,20 @@ export default function MoSo() {
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">CMND / Căn cước công dân</label>
                   <input
                     type="text" name="cmnd" required
-                    value={form.cmnd} onChange={handleChange} onBlur={handleCmndBlur}
+                    value={form.cmnd} onChange={handleCmndChange} onBlur={handleCmndBlur}
+                    list="cmnd-suggestions"
+                    autoComplete="off"
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition"
                     placeholder="VD: 079123456789"
                   />
+                  
+                  <datalist id="cmnd-suggestions">
+                    {suggestedUsers.map(user => (
+                      <option key={user.id} value={user.cmnd}>
+                        {user.hoTen} - {user.soDienThoai || 'Chưa cập nhật SĐT'}
+                      </option>
+                    ))}
+                  </datalist>
                   {khachHangTimThay && (
                     <p className="text-xs text-emerald-500 font-medium">✓ Khách hàng cũ</p>
                   )}
