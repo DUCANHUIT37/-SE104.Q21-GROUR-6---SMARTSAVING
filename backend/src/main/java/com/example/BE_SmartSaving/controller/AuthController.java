@@ -5,6 +5,12 @@ import com.example.BE_SmartSaving.dto.AuthResponseDTO;
 import com.example.BE_SmartSaving.dto.LoginRequestDTO;
 import com.example.BE_SmartSaving.security.CustomUserDetails;
 import com.example.BE_SmartSaving.security.JwtUtil;
+import com.example.BE_SmartSaving.dto.RegisterRequestDTO;
+import com.example.BE_SmartSaving.model.NguoiDung;
+import com.example.BE_SmartSaving.model.TaiKhoan;
+import com.example.BE_SmartSaving.repository.NguoiDungRepository;
+import com.example.BE_SmartSaving.repository.TaiKhoanRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +27,15 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private NguoiDungRepository nguoiDungRepository;
+
+    @Autowired
+    private TaiKhoanRepository taiKhoanRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponseDTO>> login(@RequestBody LoginRequestDTO request) {
@@ -51,6 +66,36 @@ public class AuthController {
             return ResponseEntity.status(401).body(
                     ApiResponse.error(401, "Email hoặc mật khẩu không chính xác")
             );
+        }
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<?>> register(@RequestBody RegisterRequestDTO request) {
+        try {
+            if (taiKhoanRepository.findByEmail(request.getEmail()).isPresent()) {
+                return ResponseEntity.badRequest().body(ApiResponse.error(400, "Email đã tồn tại!"));
+            }
+            if (nguoiDungRepository.findByCmnd(request.getCmnd()).isPresent()) {
+                return ResponseEntity.badRequest().body(ApiResponse.error(400, "CMND đã tồn tại trong hệ thống!"));
+            }
+
+            NguoiDung nguoiDung = new NguoiDung();
+            nguoiDung.setHoTen(request.getHoTen());
+            nguoiDung.setCmnd(request.getCmnd());
+            nguoiDung.setLoaiNguoiDung(NguoiDung.LoaiNguoiDungEnum.khach_hang);
+            nguoiDung = nguoiDungRepository.save(nguoiDung);
+
+            TaiKhoan taiKhoan = new TaiKhoan();
+            taiKhoan.setEmail(request.getEmail());
+            taiKhoan.setMatKhauHash(passwordEncoder.encode(request.getMatKhau()));
+            taiKhoan.setQuyenHan(TaiKhoan.QuyenHanEnum.khach_hang);
+            taiKhoan.setKichHoat(true);
+            taiKhoan.setNguoiDung(nguoiDung);
+            taiKhoanRepository.save(taiKhoan);
+
+            return ResponseEntity.ok(ApiResponse.success("Đăng ký thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.error(500, "Lỗi server: " + e.getMessage()));
         }
     }
 }
