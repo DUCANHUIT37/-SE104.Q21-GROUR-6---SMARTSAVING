@@ -25,16 +25,13 @@ const mapDtoToUi = (dto) => ({
   ngayDaoHan: dto.ngayDaoHan,
   trangThai: dto.trangThai,
   // Flattened relations từ Backend DTO
-  khachHang: dto.khachHangId ? {
-    id: dto.khachHangId,
-    hoTen: dto.khachHangTen,
-    cmnd: dto.khachHangCmnd,
-  } : null,
-  loaiTietKiem: dto.loaiTietKiemId ? {
-    id: dto.loaiTietKiemId,
-    tenLoai: dto.loaiTietKiemTen,
-    kyHanThang: dto.kyHanThang ?? 0,
-  } : null,
+  khachHangId: dto.khachHangId,
+  khachHangTen: dto.khachHangTen,
+  khachHangCmnd: dto.khachHangCmnd,
+  
+  loaiTietKiemId: dto.loaiTietKiemId,
+  loaiTietKiemTen: dto.loaiTietKiemTen,
+  kyHanThang: dto.kyHanThang ?? 0,
 });
 
 export default function Passbooks() {
@@ -528,7 +525,7 @@ export default function Passbooks() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Khách Hàng:</span>
-                  <span className="font-semibold text-gray-900 dark:text-white">{actionModal.so.khachHang?.hoTen}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{actionModal.so.khachHangTen}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Số Dư Hiện Tại:</span>
@@ -536,11 +533,11 @@ export default function Passbooks() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Loại Kỳ Hạn:</span>
-                  <span className="font-semibold text-sky-600 dark:text-sky-400">{actionModal.so.loaiTietKiem?.tenLoai}</span>
+                  <span className="font-semibold text-sky-600 dark:text-sky-400">{actionModal.so.loaiTietKiemTen}</span>
                 </div>
               </div>
 
-              {actionModal.type === "WITHDRAWAL" && actionModal.so.loaiTietKiem?.kyHanThang > 0 && (
+              {actionModal.type === "WITHDRAWAL" && actionModal.so.kyHanThang > 0 && (
                 <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border border-amber-200 dark:border-amber-800 flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
                   <p className="text-xs text-amber-800 dark:text-amber-400 leading-relaxed">
@@ -567,7 +564,7 @@ export default function Passbooks() {
                       placeholder="VD: 1000000"
                       value={amount ? Number(amount).toLocaleString('vi-VN') : ''}
                       onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
-                      readOnly={actionModal.type === "WITHDRAWAL" && actionModal.so.loaiTietKiem?.kyHanThang > 0}
+                      readOnly={actionModal.type === "WITHDRAWAL" && actionModal.so.kyHanThang > 0}
                       className="w-full px-5 py-4 border border-gray-200 dark:border-gray-700 rounded-2xl bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none text-xl font-bold text-gray-900 dark:text-white disabled:opacity-70 transition-all"
                     />
                     <span className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 font-bold">VNĐ</span>
