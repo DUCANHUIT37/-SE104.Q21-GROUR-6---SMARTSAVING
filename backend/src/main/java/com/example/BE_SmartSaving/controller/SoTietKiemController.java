@@ -11,6 +11,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 /**
  * Quản lý sổ tiết kiệm – nghiệp vụ chính.
@@ -55,6 +61,82 @@ public class SoTietKiemController {
     public ResponseEntity<ApiResponse<List<SoTietKiemDTO>>> layDanhSach() {
         List<SoTietKiemDTO> list = soTietKiemService.layTatCaSo();
         return ResponseEntity.ok(ApiResponse.success(list));
+    }
+
+    /** Xuất danh sách sổ tiết kiệm ra file Excel (.xlsx) */
+    @GetMapping("/export/excel")
+    @PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
+    public ResponseEntity<byte[]> exportToExcel() {
+        List<SoTietKiemDTO> list = soTietKiemService.layTatCaSo();
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Danh Sách Sổ Tiết Kiệm");
+
+            // Header Style
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderTop(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+
+            // Row Style
+            CellStyle rowStyle = workbook.createCellStyle();
+            rowStyle.setBorderBottom(BorderStyle.THIN);
+            rowStyle.setBorderTop(BorderStyle.THIN);
+            rowStyle.setBorderLeft(BorderStyle.THIN);
+            rowStyle.setBorderRight(BorderStyle.THIN);
+
+            // Headers
+            String[] headers = {"Mã Sổ", "Tên Khách Hàng", "CMND/CCCD", "Số Dư (VNĐ)", "Kỳ Hạn", "Lãi Suất (%)", "Ngày Mở Sổ", "Ngày Đáo Hạn", "Trạng Thái"};
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Data
+            int rowIdx = 1;
+            for (SoTietKiemDTO dto : list) {
+                Row row = sheet.createRow(rowIdx++);
+                
+                Cell c0 = row.createCell(0); c0.setCellValue(dto.getMaSo()); c0.setCellStyle(rowStyle);
+                Cell c1 = row.createCell(1); c1.setCellValue(dto.getKhachHangTen() != null ? dto.getKhachHangTen() : ""); c1.setCellStyle(rowStyle);
+                Cell c2 = row.createCell(2); c2.setCellValue(dto.getKhachHangCmnd() != null ? dto.getKhachHangCmnd() : ""); c2.setCellStyle(rowStyle);
+                Cell c3 = row.createCell(3); c3.setCellValue(dto.getSoDuHienTai() != null ? dto.getSoDuHienTai().doubleValue() : 0); c3.setCellStyle(rowStyle);
+                Cell c4 = row.createCell(4); c4.setCellValue(dto.getLoaiTietKiemTen() != null ? dto.getLoaiTietKiemTen() : ""); c4.setCellStyle(rowStyle);
+                Cell c5 = row.createCell(5); c5.setCellValue(dto.getLaiSuatMoSo() != null ? dto.getLaiSuatMoSo().doubleValue() : 0); c5.setCellStyle(rowStyle);
+                Cell c6 = row.createCell(6); c6.setCellValue(dto.getNgayMo() != null ? dto.getNgayMo().toString() : ""); c6.setCellStyle(rowStyle);
+                Cell c7 = row.createCell(7); c7.setCellValue(dto.getNgayDaoHan() != null ? dto.getNgayDaoHan().toString() : ""); c7.setCellStyle(rowStyle);
+                
+                String trangThaiStr = "Đang hoạt động";
+                if ("da_tat_toan".equals(dto.getTrangThai())) trangThaiStr = "Đã tất toán";
+                Cell c8 = row.createCell(8); c8.setCellValue(trangThaiStr); c8.setCellStyle(rowStyle);
+            }
+
+            // Auto-fit columns
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            
+            HttpHeaders resHeaders = new HttpHeaders();
+            resHeaders.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            resHeaders.setContentDispositionFormData("attachment", "danh_sach_so_tiet_kiem.xlsx");
+
+            return ResponseEntity.ok()
+                    .headers(resHeaders)
+                    .body(out.toByteArray());
+
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi xuất file Excel", e);
+        }
     }
 
     /** Tìm kiếm theo mã sổ, tên KH hoặc CMND (BM4) */
