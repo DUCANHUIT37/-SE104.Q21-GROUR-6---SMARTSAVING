@@ -26,12 +26,11 @@ public interface SoTietKiemRepository extends JpaRepository<SoTietKiem, Integer>
             "       kh.cmnd LIKE CONCAT('%', :tuKhoa, '%'))")
     List<SoTietKiem> timKiem(@Param("tuKhoa") String tuKhoa);
 
-    /** Đếm số sổ mở theo loại và ngày (dùng cho BM5.2) */
-    @Query("SELECT COUNT(s) FROM SoTietKiem s " +
-            "WHERE s.loaiTietKiem.id = :loaiId " +
-            "AND s.ngayMo = :ngay")
-    Long demSoMoTheoLoaiVaNgay(@Param("loaiId") Integer loaiId,
-                               @Param("ngay") java.time.LocalDate ngay);
+    @Query("SELECT s.loaiTietKiem.id, s.ngayMo, COUNT(s) FROM SoTietKiem s " +
+            "WHERE s.ngayMo >= :startDate AND s.ngayMo <= :endDate " +
+            "GROUP BY s.loaiTietKiem.id, s.ngayMo")
+    List<Object[]> countSoMoByDateRange(@Param("startDate") java.time.LocalDate startDate,
+                                        @Param("endDate") java.time.LocalDate endDate);
 
     /** Đếm số sổ đóng theo loại và ngày (trangThai = da_tat_toan) */
     @Query("SELECT COUNT(p) FROM PhieuRut p " +

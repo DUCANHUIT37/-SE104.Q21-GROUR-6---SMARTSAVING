@@ -26,12 +26,9 @@ public interface PhieuRutRepository extends JpaRepository<PhieuRut, Integer> {
     BigDecimal tinhTongChiTheoLoaiVaNgay(@Param("loaiId") Integer loaiId,
                                          @Param("ngay") LocalDate ngay);
 
-    /**
-     * Đếm số sổ đóng (tất toán) theo loại và ngày – dùng cho BM5.2.
-     */
-    @Query("SELECT COUNT(pr) FROM PhieuRut pr " +
-            "WHERE pr.soTietKiem.loaiTietKiem.id = :loaiId " +
-            "AND pr.ngayRut = :ngay AND pr.tatToan = true")
-    Long demSoDongTheoLoaiVaNgay(@Param("loaiId") Integer loaiId,
-                                 @Param("ngay") LocalDate ngay);
+    @Query("SELECT pr.soTietKiem.loaiTietKiem.id, pr.ngayRut, COUNT(pr) FROM PhieuRut pr " +
+            "WHERE pr.ngayRut >= :startDate AND pr.ngayRut <= :endDate AND pr.tatToan = true " +
+            "GROUP BY pr.soTietKiem.loaiTietKiem.id, pr.ngayRut")
+    List<Object[]> countSoDongByDateRange(@Param("startDate") LocalDate startDate,
+                                          @Param("endDate") LocalDate endDate);
 }

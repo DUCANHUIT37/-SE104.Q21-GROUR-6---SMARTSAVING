@@ -80,18 +80,34 @@ public class BaoCaoService {
                           .orElseThrow(() -> new RuntimeException("Không tìm thấy loại TK")))
                 : loaiTietKiemRepository.findAll();
 
+        LocalDate startDate = thang.atDay(1);
+        LocalDate endDate = thang.atEndOfMonth();
+
+        List<Object[]> kqSoMo = soTietKiemRepository.countSoMoByDateRange(startDate, endDate);
+        List<Object[]> kqSoDong = phieuRutRepository.countSoDongByDateRange(startDate, endDate);
+
+        java.util.Map<String, Long> mapSoMo = new java.util.HashMap<>();
+        for (Object[] row : kqSoMo) {
+            String key = row[0] + "_" + row[1].toString();
+            mapSoMo.put(key, ((Number) row[2]).longValue());
+        }
+
+        java.util.Map<String, Long> mapSoDong = new java.util.HashMap<>();
+        for (Object[] row : kqSoDong) {
+            String key = row[0] + "_" + row[1].toString();
+            mapSoDong.put(key, ((Number) row[2]).longValue());
+        }
+
         for (LoaiTietKiem loai : danhSachLoai) {
-            // Duyệt từng ngày trong tháng
             int soNgayTrongThang = thang.lengthOfMonth();
             for (int ngay = 1; ngay <= soNgayTrongThang; ngay++) {
                 LocalDate ngayHienTai = thang.atDay(ngay);
+                String key = loai.getId() + "_" + ngayHienTai.toString();
 
-                long soSoMo = soTietKiemRepository
-                        .demSoMoTheoLoaiVaNgay(loai.getId(), ngayHienTai);
-                long soSoDong = phieuRutRepository
-                        .demSoDongTheoLoaiVaNgay(loai.getId(), ngayHienTai);
+                long soSoMo = mapSoMo.getOrDefault(key, 0L);
+                long soSoDong = mapSoDong.getOrDefault(key, 0L);
 
-                if (soSoMo > 0 || soSoDong > 0) { // Chỉ thêm ngày có phát sinh
+                if (soSoMo > 0 || soSoDong > 0) {
                     BaoCaoThangDTO dto = new BaoCaoThangDTO();
                     dto.setTenLoaiTietKiem(loai.getTenLoai());
                     dto.setNgay(ngayHienTai);
