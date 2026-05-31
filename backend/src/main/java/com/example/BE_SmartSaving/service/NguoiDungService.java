@@ -135,4 +135,23 @@ public class NguoiDungService {
         existing.setSoDienThoai(thongTinMoi.getSoDienThoai());
         return toDTO(nguoiDungRepository.save(existing));
     }
+
+    @org.springframework.transaction.annotation.Transactional
+    public NguoiDungDTO thangCapThanhGiaoDichVien(Integer id) {
+        NguoiDung nguoiDung = layEntityTheoId(id);
+        if (nguoiDung.getLoaiNguoiDung() == NguoiDung.LoaiNguoiDungEnum.giao_dich_vien) {
+            throw new RuntimeException("Người dùng này đã là Giao Dịch Viên!");
+        }
+        
+        nguoiDung.setLoaiNguoiDung(NguoiDung.LoaiNguoiDungEnum.giao_dich_vien);
+        nguoiDungRepository.save(nguoiDung);
+
+        TaiKhoan taiKhoan = taiKhoanRepository.findByNguoiDungId(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Tài Khoản cho người dùng này!"));
+        
+        taiKhoan.setQuyenHan(TaiKhoan.QuyenHanEnum.giao_dich_vien);
+        taiKhoanRepository.save(taiKhoan);
+
+        return toDTO(nguoiDung);
+    }
 }

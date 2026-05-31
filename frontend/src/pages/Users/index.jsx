@@ -53,6 +53,16 @@ export default function Users() {
       toast.error(error.response?.data?.message || 'Lỗi cập nhật trạng thái');
     }
   };
+  const handlePromote = async (u) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn thăng cấp ${u.hoTen} thành Giao Dịch Viên không?`)) return;
+    try {
+      const res = await nguoiDungApi.thangCapTeller(u.id);
+      setUsers(prev => prev.map(x => x.id === u.id ? res.data.data : x));
+      toast.success(`Đã thăng cấp ${u.hoTen} thành Giao Dịch Viên thành công!`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Lỗi thăng cấp người dùng');
+    }
+  };
 
   // WARN-03 FIX: Implement create using POST /api/nguoidung
   const handleCreate = async (e) => {
@@ -164,10 +174,18 @@ export default function Users() {
                   </span>
                 </td>
                 <td className="px-4 py-3.5">
-                  <button onClick={() => handleToggle(u)}
-                    className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors', u.kichHoat ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400')}>
-                    {u.kichHoat ? 'Khóa' : 'Kích hoạt'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => handleToggle(u)}
+                      className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors', u.kichHoat ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400')}>
+                      {u.kichHoat ? 'Khóa' : 'Kích hoạt'}
+                    </button>
+                    {u.quyenHan === 'ROLE_khach_hang' && (
+                      <button onClick={() => handlePromote(u)}
+                        className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-xs font-semibold transition-colors">
+                        Nâng quyền Teller
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
