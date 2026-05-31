@@ -49,6 +49,7 @@ public class SoTietKiemService {
                 // Flatten ManyToOne: loaiTietKiem
                 .loaiTietKiemId(stk.getLoaiTietKiem() != null ? stk.getLoaiTietKiem().getId() : null)
                 .loaiTietKiemTen(stk.getLoaiTietKiem() != null ? stk.getLoaiTietKiem().getTenLoai() : null)
+                .kyHanThang(stk.getLoaiTietKiem() != null ? stk.getLoaiTietKiem().getKyHanThang() : null)
                 .soTienBanDau(stk.getSoTienBanDau())
                 .soDuHienTai(stk.getSoDuHienTai())
                 .laiSuatMoSo(stk.getLaiSuatMoSo())

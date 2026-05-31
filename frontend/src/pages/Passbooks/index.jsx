@@ -103,8 +103,8 @@ export default function Passbooks() {
       const q = search.toLowerCase();
       const matchSearch =
         (so.maSo ?? '').toLowerCase().includes(q) ||
-        (so.khachHang?.hoTen ?? '').toLowerCase().includes(q) ||
-        (so.khachHang?.cmnd ?? '').includes(q);
+        (so.khachHangTen ?? '').toLowerCase().includes(q) ||
+        (so.khachHangCmnd ?? '').includes(q);
       
       let matchStatus = true;
       if (trangThaiFilter === 'DANG_HOAT_DONG') matchStatus = so.trangThai === 'dang_hoat_dong';
@@ -140,8 +140,8 @@ export default function Passbooks() {
             bValue = b.maSo;
             break;
           case 'khachHang':
-            aValue = a.khachHang?.hoTen || '';
-            bValue = b.khachHang?.hoTen || '';
+            aValue = a.khachHangTen || '';
+            bValue = b.khachHangTen || '';
             break;
           case 'soDu':
             aValue = a.soDuHienTai;
@@ -233,7 +233,7 @@ export default function Passbooks() {
 
   const openActionModal = (so, type) => {
     setActionModal({ isOpen: true, type, so });
-    setAmount(type === 'WITHDRAWAL' && so.loaiTietKiem?.kyHanThang > 0 ? so.soDuHienTai.toString() : '');
+    setAmount(type === 'WITHDRAWAL' && so.kyHanThang > 0 ? so.soDuHienTai.toString() : '');
     setActionError('');
   };
 
@@ -390,15 +390,15 @@ export default function Passbooks() {
                         #{s.maSo.slice(-6)}
                       </td>
                       <td className="px-4 py-4 font-medium">
-                        <div className="text-gray-900 dark:text-white">{s.khachHang?.hoTen}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-500 font-mono">{s.khachHang?.cmnd}</div>
+                        <div className="text-gray-900 dark:text-white">{s.khachHangTen}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-500 font-mono">{s.khachHangCmnd}</div>
                       </td>
                       <td className="px-4 py-4 font-bold text-gray-900 dark:text-white">
                         {formatTien(s.soDuHienTai)}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex flex-col">
-                          <span className="text-sm text-gray-900 dark:text-gray-200">{s.loaiTietKiem?.tenLoai}</span>
+                          <span className="text-sm text-gray-900 dark:text-gray-200">{s.loaiTietKiemTen}</span>
                           <span className="text-xs text-emerald-500 font-medium">{s.laiSuatMoSo}% / năm</span>
                         </div>
                       </td>
@@ -416,7 +416,7 @@ export default function Passbooks() {
                       <td className="px-4 py-4 text-right">
                         {isActive && (isTeller() || isAdmin()) && (
                           <div className="flex justify-end gap-2">
-                            {s.loaiTietKiem?.kyHanThang === 0 && (
+                            {s.kyHanThang === 0 && (
                               <button
                                 onClick={() => openActionModal(s, "DEPOSIT")}
                                 className="inline-flex items-center px-2.5 py-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-lg hover:bg-emerald-100 transition-colors"

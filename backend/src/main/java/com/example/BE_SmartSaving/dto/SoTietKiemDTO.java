@@ -43,6 +43,9 @@ public class SoTietKiemDTO {
     @JsonProperty("loaiTietKiemTen")
     private String loaiTietKiemTen;
 
+    @JsonProperty("kyHanThang")
+    private Integer kyHanThang;
+
     @JsonProperty("soTienBanDau")
     private BigDecimal soTienBanDau;
 
