@@ -213,10 +213,10 @@ export default function MoSo() {
                   <input
                     type="text" name="diaChi" required
                     value={form.diaChi} onChange={handleChange}
-                    disabled={!!khachHangTimThay}
+                    disabled={!!(khachHangTimThay && khachHangTimThay.diaChi)}
                     className={cn(
                       "w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg outline-none transition focus:ring-2 focus:ring-emerald-500",
-                      khachHangTimThay ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-70 text-gray-700 dark:text-gray-400" : "bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                      (khachHangTimThay && khachHangTimThay.diaChi) ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-70 text-gray-700 dark:text-gray-400" : "bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
                     )}
                     placeholder="VD: Số 123, Phường A, Quận B"
                   />
@@ -266,7 +266,7 @@ export default function MoSo() {
             </div>
 
             <button
-              type="submit" disabled={loading}
+              type="submit" disabled={loading || cmndNotFound}
               className="mt-6 w-full flex justify-center items-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
