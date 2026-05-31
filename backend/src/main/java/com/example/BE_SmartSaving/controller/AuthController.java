@@ -82,6 +82,7 @@ public class AuthController {
             NguoiDung nguoiDung = new NguoiDung();
             nguoiDung.setHoTen(request.getHoTen());
             nguoiDung.setCmnd(request.getCmnd());
+            nguoiDung.setDiaChi("Chưa cập nhật");
             nguoiDung.setLoaiNguoiDung(NguoiDung.LoaiNguoiDungEnum.khach_hang);
             nguoiDung = nguoiDungRepository.save(nguoiDung);
 
