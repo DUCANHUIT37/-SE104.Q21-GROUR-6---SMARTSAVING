@@ -6,7 +6,7 @@ import {
   ChevronUp, ChevronDown, ArrowUpDown, RefreshCw, WifiOff
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { soTietKiemApi, thamSoApi } from '../../services/api';
+import api, { soTietKiemApi, thamSoApi } from '../../services/api';
 // Removed fakeDb imports as they are no longer needed for mock transactions
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
@@ -200,33 +200,35 @@ export default function Passbooks() {
     );
   };
 
-  const handleExportCSV = () => {
-    if (filtered.length === 0) {
-      toast.error("Không có dữ liệu để xuất");
-      return;
+  const handleExportExcel = async () => {
+    try {
+      // Sử dụng instance 'api' đã được config sẵn JWT token
+      const response = await api.get('/sotietkiem/export/excel', {
+        responseType: 'blob' // RẤT QUAN TRỌNG: Ép Axios trả về dữ liệu Binary thay vì JSON parse
+      });
+
+      // Tạo url cho file Binary
+      const blob = new Blob([response.data], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      });
+      const url = URL.createObjectURL(blob);
+      
+      // Kích hoạt Download
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Danh_Sach_So_Tiet_Kiem_${new Date().toISOString().split('T')[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("Xuất file Excel thành công!");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Có lỗi xảy ra khi xuất file Excel.");
     }
-
-    const headers = ["Mã Sổ", "Tên Khách Hàng", "CMND/CCCD", "Tiền Gốc", "Loại Kỳ Hạn", "Lãi Suất (%)", "Ngày Đáo Hạn", "Trạng Thái"];
-    const csvRows = filtered.map(s => [
-      s.maSo,
-      s.khachHang?.hoTen || "",
-      s.khachHang?.cmnd || "",
-      s.soDuHienTai,
-      s.loaiTietKiem?.tenLoai || "",
-      s.laiSuatMoSo || 0,
-      s.ngayDaoHan ? new Date(s.ngayDaoHan).toLocaleDateString("vi-VN") : "",
-      s.trangThai === "dang_hoat_dong" ? "Đang hoạt động" : "Đã tất toán"
-    ].map(v => `"${v}"`).join(","));
-
-    const csvData = [headers.join(","), ...csvRows].join("\n");
-    const blob = new Blob(["\uFEFF" + csvData], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `BaoCao_SoTietKiem_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const openActionModal = (so, type) => {
@@ -313,7 +315,7 @@ export default function Passbooks() {
 
         <div className="flex flex-col sm:flex-row gap-2">
           <button
-            onClick={handleExportCSV}
+            onClick={handleExportExcel}
             className="inline-flex items-center justify-center px-4 py-2 border border-emerald-200 text-emerald-700 bg-white dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20 hover:bg-emerald-50 rounded-xl font-semibold text-sm transition-all"
           >
             <Download className="w-4 h-4 mr-2" /> Xuất Danh Sách
