@@ -63,7 +63,12 @@ export default function MoSo() {
       if (found) {
         setKhachHangTimThay(found);
         setCmndNotFound(false);
-        setForm(f => ({ ...f, hoTen: found.hoTen, diaChi: found.diaChi || '', soDienThoai: found.soDienThoai || '' }));
+        setForm(f => ({ 
+          ...f, 
+          hoTen: found.hoTen, 
+          diaChi: (found.diaChi && found.diaChi !== "Chưa cập nhật") ? found.diaChi : '', 
+          soDienThoai: found.soDienThoai || '' 
+        }));
         toast.success(`✅ Tìm thấy khách hàng: ${found.hoTen}`);
       }
     } catch (e) {
@@ -213,10 +218,10 @@ export default function MoSo() {
                   <input
                     type="text" name="diaChi" required
                     value={form.diaChi} onChange={handleChange}
-                    disabled={!!(khachHangTimThay && khachHangTimThay.diaChi)}
+                    disabled={!!(khachHangTimThay && khachHangTimThay.diaChi && khachHangTimThay.diaChi !== "Chưa cập nhật")}
                     className={cn(
                       "w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg outline-none transition focus:ring-2 focus:ring-emerald-500",
-                      (khachHangTimThay && khachHangTimThay.diaChi) ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-70 text-gray-700 dark:text-gray-400" : "bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                      (khachHangTimThay && khachHangTimThay.diaChi && khachHangTimThay.diaChi !== "Chưa cập nhật") ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-70 text-gray-700 dark:text-gray-400" : "bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
                     )}
                     placeholder="VD: Số 123, Phường A, Quận B"
                   />
