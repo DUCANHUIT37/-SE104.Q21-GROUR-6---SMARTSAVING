@@ -29,7 +29,7 @@ public interface SoTietKiemRepository extends JpaRepository<SoTietKiem, Integer>
     /** Đếm số sổ mở theo loại và ngày (dùng cho BM5.2) */
     @Query("SELECT COUNT(s) FROM SoTietKiem s " +
             "WHERE s.loaiTietKiem.id = :loaiId " +
-            "AND FUNCTION('DATE', s.ngayMo) = :ngay")
+            "AND s.ngayMo = :ngay")
     Long demSoMoTheoLoaiVaNgay(@Param("loaiId") Integer loaiId,
                                @Param("ngay") java.time.LocalDate ngay);
 
