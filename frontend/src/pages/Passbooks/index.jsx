@@ -420,7 +420,7 @@ export default function Passbooks() {
                   return (
                     <tr 
                       key={s.id} 
-                      onDoubleClick={() => handleRowDoubleClick(s.id)}
+                      onClick={() => handleRowDoubleClick(s.id)}
                       className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
                     >
                       <td className="px-4 py-4 text-gray-500 dark:text-gray-400 font-medium">
@@ -439,7 +439,7 @@ export default function Passbooks() {
                       <td className="px-4 py-4">
                         <div className="flex flex-col">
                           <span className="text-sm text-gray-900 dark:text-gray-200">{s.loaiTietKiemTen}</span>
-                          <span className="text-xs text-emerald-500 font-medium">{s.laiSuatMoSo}% / năm</span>
+                          <span className="text-xs text-emerald-500 font-medium">{Number(s.laiSuatMoSo).toFixed(1)}% / năm</span>
                         </div>
                       </td>
                       <td className="px-4 py-4 text-gray-600 dark:text-gray-400">
@@ -455,18 +455,20 @@ export default function Passbooks() {
                       </td>
                       <td className="px-4 py-4 text-right">
                         {isActive && (isTeller() || isAdmin()) && (
-                          <div className="flex justify-end gap-2">
-                            {s.kyHanThang === 0 && (
+                          <div className="flex justify-end gap-2 min-w-[210px]">
+                            {s.kyHanThang === 0 ? (
                               <button
-                                onClick={() => openActionModal(s, "DEPOSIT")}
-                                className="inline-flex items-center px-2.5 py-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-lg hover:bg-emerald-100 transition-colors"
+                                onClick={(e) => { e.stopPropagation(); openActionModal(s, "DEPOSIT"); }}
+                                className="w-[95px] justify-center whitespace-nowrap inline-flex items-center px-2.5 py-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-lg hover:bg-emerald-100 transition-colors"
                               >
                                 <ArrowDownLeft className="h-3.5 w-3.5 mr-1" /> Gửi thêm
                               </button>
+                            ) : (
+                              <div className="w-[95px]"></div>
                             )}
                             <button
-                              onClick={() => openActionModal(s, "WITHDRAWAL")}
-                              className="inline-flex items-center px-2.5 py-1.5 text-xs font-semibold text-orange-600 bg-orange-50 dark:bg-orange-500/10 dark:text-orange-400 rounded-lg hover:bg-orange-100 transition-colors"
+                              onClick={(e) => { e.stopPropagation(); openActionModal(s, "WITHDRAWAL"); }}
+                              className="w-[115px] justify-center whitespace-nowrap inline-flex items-center px-2.5 py-1.5 text-xs font-semibold text-orange-600 bg-orange-50 dark:bg-orange-500/10 dark:text-orange-400 rounded-lg hover:bg-orange-100 transition-colors"
                             >
                               <ArrowUpRight className="h-3.5 w-3.5 mr-1" /> Rút / Tất toán
                             </button>

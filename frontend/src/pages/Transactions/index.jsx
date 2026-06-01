@@ -124,11 +124,11 @@ export default function Transactions() {
                     </td>
                     <td className="px-4 py-4">
                       {t.uiType === "DEPOSIT" ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                        <span className="inline-flex items-center whitespace-nowrap gap-1 px-4 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                           <ArrowDownRight className="w-3 h-3" /> Nộp tiền
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400 border border-red-200 dark:border-red-800">
+                        <span className="inline-flex items-center whitespace-nowrap gap-1 px-4 py-1.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400 border border-red-200 dark:border-red-800">
                           <ArrowUpRight className="w-3 h-3" /> Rút / Tất toán
                         </span>
                       )}

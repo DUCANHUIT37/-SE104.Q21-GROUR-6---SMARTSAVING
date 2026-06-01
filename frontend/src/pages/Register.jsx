@@ -12,6 +12,7 @@ export default function Register() {
   const [formData, setFormData] = useState({
     hoTen: '',
     cmnd: '',
+    diaChi: '',
     email: '',
     matKhau: '',
     xacNhanMatKhau: ''
@@ -54,7 +55,7 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.hoTen || !formData.cmnd || !formData.email || !formData.matKhau || !formData.xacNhanMatKhau) {
+    if (!formData.hoTen || !formData.cmnd || !formData.diaChi || !formData.email || !formData.matKhau || !formData.xacNhanMatKhau) {
       showAlert({ type: 'warning', title: 'Thiếu thông tin', message: 'Vui lòng điền đầy đủ tất cả thông tin trước khi đăng ký!' });
       return;
     }
@@ -74,6 +75,7 @@ export default function Register() {
       const res = await api.post('/auth/register', {
         hoTen: formData.hoTen,
         cmnd: formData.cmnd,
+        diaChi: formData.diaChi,
         email: formData.email,
         matKhau: formData.matKhau
       });
@@ -120,6 +122,11 @@ export default function Register() {
             <div>
               <label className="block text-gray-400 text-[10px] uppercase font-bold mb-2">Số CMND / CCCD</label>
               <input name="cmnd" value={formData.cmnd} onChange={handleChange} type="text" placeholder="9 hoặc 12 chữ số định danh" className="w-full bg-[#0B131E] border border-gray-800 rounded-lg p-3 text-white text-sm focus:border-[#0085D0] outline-none transition-all" />
+            </div>
+
+            <div>
+              <label className="block text-gray-400 text-[10px] uppercase font-bold mb-2">Địa chỉ thường trú</label>
+              <input name="diaChi" value={formData.diaChi} onChange={handleChange} type="text" placeholder="VD: Quận 1, TP.HCM" className="w-full bg-[#0B131E] border border-gray-800 rounded-lg p-3 text-white text-sm focus:border-[#0085D0] outline-none transition-all" />
             </div>
 
             <div>
