@@ -64,6 +64,10 @@ public class AuthController {
                     ApiResponse.success(responseDTO)
             );
 
+        } catch (org.springframework.security.authentication.DisabledException | org.springframework.security.authentication.LockedException e) {
+            return ResponseEntity.status(403).body(
+                    ApiResponse.error(403, "Tài khoản của bạn đã bị khoá. Vui lòng liên hệ Admin.")
+            );
         } catch (Exception e) {
             return ResponseEntity.status(401).body(
                     ApiResponse.error(401, "Email hoặc mật khẩu không chính xác")

@@ -115,6 +115,8 @@ export const nguoiDungApi = {
     api.put(`/nguoidung/${id}/promote-to-teller`),
   haQuyenUser: (id) =>
     api.put(`/nguoidung/${id}/demote-to-user`),
+  toggleKichHoat: (id) =>
+    api.put(`/nguoidung/${id}/toggle-status`),
 };
 
 // ─── Báo Cáo API ──────────────────────────────────────────────────────────────
