@@ -1,13 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import logoIcon from '../assets/Logo.svg';
-import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
+import AlertModal, { useAlert } from '../components/AlertModal';
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { alertProps, showAlert } = useAlert();
 
+  // Dùng ref để giữ giá trị thực – tránh bug reset khi blur / re-render
+  const emailRef = useRef('');
+  const matKhauRef = useRef('');
+
+  // State chỉ để React re-render UI (không làm nguồn dữ liệu submit)
+  const [emailDisplay, setEmailDisplay] = useState('');
+  const [matKhauDisplay, setMatKhauDisplay] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect nếu đã đăng nhập
   useEffect(() => {
     const token = localStorage.getItem('jwt_token');
     if (token) {
@@ -15,24 +28,38 @@ export default function Login() {
     }
   }, [navigate]);
 
-  const [email, setEmail]       = useState('');
-  const [matKhau, setMatKhau]   = useState('');
-  const [showPass, setShowPass] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError]       = useState('');
+  const handleEmailChange = (e) => {
+    emailRef.current = e.target.value;
+    setEmailDisplay(e.target.value);
+  };
+
+  const handleMatKhauChange = (e) => {
+    matKhauRef.current = e.target.value;
+    setMatKhauDisplay(e.target.value);
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
+    const email = emailRef.current;
+    const matKhau = matKhauRef.current;
 
+    if (!email || !matKhau) {
+      showAlert({ type: 'warning', title: 'Thiếu thông tin', message: 'Vui lòng nhập Email và Mật khẩu trước khi đăng nhập.' });
+      return;
+    }
+
+    setIsLoading(true);
     const result = await login(email, matKhau);
     setIsLoading(false);
 
     if (result.success) {
       navigate('/overview', { replace: true });
     } else {
-      setError(result.message);
+      showAlert({
+        type: 'error',
+        title: 'Đăng nhập thất bại',
+        message: result.message || 'Thông tin đăng nhập không chính xác. Vui lòng thử lại.',
+      });
     }
   };
 
@@ -83,14 +110,6 @@ export default function Login() {
           <h2 className="text-white text-3xl font-bold mb-2">Đăng Nhập Thành Viên</h2>
           <p className="text-gray-500 mb-8 text-sm">Nhập thông tin xác thực để truy cập Dashboard</p>
 
-          {/* Error Banner */}
-          {error && (
-            <div className="mb-6 flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-sm">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
           <form className="space-y-6" onSubmit={handleLogin}>
             {/* Email */}
             <div>
@@ -101,8 +120,8 @@ export default function Login() {
                 id="login-email"
                 type="email"
                 placeholder="name@bank.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={emailDisplay}
+                onChange={handleEmailChange}
                 required
                 autoComplete="email"
                 className="w-full bg-[#111827] border border-gray-800 rounded-xl p-4 text-white focus:outline-none focus:border-[#00C194] transition-all placeholder:text-gray-600"
@@ -120,16 +139,17 @@ export default function Login() {
                   id="login-password"
                   type={showPass ? 'text' : 'password'}
                   placeholder="••••••••"
-                  value={matKhau}
-                  onChange={(e) => setMatKhau(e.target.value)}
+                  value={matKhauDisplay}
+                  onChange={handleMatKhauChange}
                   required
                   autoComplete="current-password"
                   className="w-full bg-[#111827] border border-gray-800 rounded-xl p-4 pr-12 text-white focus:outline-none focus:border-[#00C194] transition-all placeholder:text-gray-600"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPass(v => !v)}
+                  onClick={() => setShowPass((v) => !v)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  tabIndex={-1}
                 >
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -161,6 +181,8 @@ export default function Login() {
         </div>
       </div>
 
+      {/* Alert Popup */}
+      <AlertModal {...alertProps} />
     </div>
   );
 }

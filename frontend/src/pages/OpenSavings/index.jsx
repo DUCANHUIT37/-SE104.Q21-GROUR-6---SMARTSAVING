@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { PiggyBank, CalendarDays, ReceiptText, ShieldCheck, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   nguoiDungApi, loaiTietKiemApi, thamSoApi, soTietKiemApi
 } from '../../services/api';
 import { cn } from '../../lib/utils';
+import AlertModal, { useAlert } from '../../components/AlertModal';
 
 const formatTien = (val) => {
   if (!val) return '';
@@ -17,6 +17,7 @@ const formatTien = (val) => {
 export default function MoSo() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { alertProps, showAlert } = useAlert();
 
   const [form, setForm] = useState({
     cmnd: '', hoTen: '', diaChi: '',
@@ -46,7 +47,7 @@ export default function MoSo() {
         if (minDeposit) setSoTienToiThieu(Number(minDeposit));
       } catch (error) {
         console.error('Lỗi lấy dữ liệu ban đầu', error);
-        toast.error('Lỗi kết nối máy chủ');
+        showAlert({ type: 'error', title: 'Lỗi kết nối', message: 'Không thể kết nối máy chủ. Vui lòng thử lại!' });
       } finally {
         setInitialLoading(false);
       }
@@ -72,7 +73,7 @@ export default function MoSo() {
           diaChi: (found.diaChi && found.diaChi !== "Chưa cập nhật") ? found.diaChi : '', 
           soDienThoai: found.soDienThoai || '' 
         }));
-        toast.success(`✅ Tìm thấy khách hàng: ${found.hoTen}`);
+        showAlert({ type: 'success', title: 'Tìm thấy khách hàng', message: `✅ ${found.hoTen} — CMND: ${form.cmnd}` });
       }
     } catch (e) {
       if (e.response?.status === 404) {
@@ -80,9 +81,9 @@ export default function MoSo() {
         setCmndNotFound(true);
         // Reset form for safety
         setForm(f => ({ ...f, hoTen: '', diaChi: '', soDienThoai: '' }));
-        toast.error("Khách hàng chưa có tài khoản hệ thống. Hãy đăng ký trước!");
+        showAlert({ type: 'error', title: 'Không tìm thấy khách hàng', message: 'Khách hàng chưa có tài khoản trong hệ thống. Vui lòng đăng ký trước!' });
       } else {
-        toast.error('Lỗi tra cứu CMND. Vui lòng thử lại.');
+        showAlert({ type: 'error', title: 'Lỗi tra cứu', message: 'Lỗi tra cứu CMND. Vui lòng thử lại.' });
         console.error('CMND lookup error:', e);
       }
     }
@@ -98,7 +99,7 @@ export default function MoSo() {
       diaChi: (user.diaChi && user.diaChi !== "Chưa cập nhật") ? user.diaChi : '', 
       soDienThoai: user.soDienThoai || '' 
     }));
-    toast.success(`✅ Tìm thấy khách hàng: ${user.hoTen}`);
+    showAlert({ type: 'success', title: 'Tìm thấy khách hàng', message: `✅ ${user.hoTen} — CMND: ${user.cmnd}` });
   };
 
   const handleCmndChange = (e) => {
@@ -142,7 +143,7 @@ export default function MoSo() {
     e.preventDefault();
 
     if (Number(form.soTienBanDau) < soTienToiThieu) {
-      toast.error(`Số tiền gửi phải lớn hơn hoặc bằng ${soTienToiThieu.toLocaleString('vi-VN')} VNĐ!`);
+      showAlert({ type: 'warning', title: 'Số tiền không hợp lệ', message: `Số tiền gửi phải lớn hơn hoặc bằng ${soTienToiThieu.toLocaleString('vi-VN')} VNĐ!` });
       return;
     }
 
@@ -172,10 +173,10 @@ export default function MoSo() {
         soTienBanDau: data.soDuHienTai, 
         loaiTietKiem: data.tenLoaiTietKiem 
       });
-      toast.success(`Mở sổ tiết kiệm thành công!`);
+      // không dùng alert ở đây vì đã có success screen riêng
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi mở sổ');
+      showAlert({ type: 'error', title: 'Lỗi mở sổ', message: error.response?.data?.message || 'Có lỗi xảy ra khi mở sổ. Vui lòng thử lại!' });
     } finally {
       setLoading(false);
     }
@@ -401,5 +402,7 @@ export default function MoSo() {
 
       </div>
     </div>
+
+      <AlertModal {...alertProps} />
   );
 }

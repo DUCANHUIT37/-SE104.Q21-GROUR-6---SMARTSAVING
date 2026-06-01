@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import toast from 'react-hot-toast';
 import { UserPlus, CheckCircle, XCircle, Shield, Loader2 } from 'lucide-react';
 import { nguoiDungApi } from '../../services/api';
 import { cn } from '../../lib/utils';
+import AlertModal, { useAlert } from '../../components/AlertModal';
 
 const ROLE_COLOR = {
   ADMIN:  'bg-rose-500/10 text-rose-400',
@@ -14,12 +14,9 @@ const ROLE_LABEL = {
   TELLER: 'Giao dịch viên',
   USER:   'Khách hàng',
 };
-const ROLE_OPTIONS = [
-  { value: 'ADMIN',  label: 'Quản trị viên' },
-  { value: 'TELLER', label: 'Giao dịch viên' },
-];
 
 export default function Users() {
+  const { alertProps, showAlert } = useAlert();
   const [users, setUsers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ hoTen: '', cmnd: '', soDienThoai: '', diaChi: '', loaiNguoiDung: 'nhan_vien', email: '', matKhau: '' });
@@ -36,53 +33,72 @@ export default function Users() {
       const res = await nguoiDungApi.layTatCa();
       setUsers(res.data.data || []);
     } catch (error) {
-      toast.error('Lỗi tải danh sách người dùng');
+      showAlert({ type: 'error', title: 'Lỗi tải dữ liệu', message: 'Không thể tải danh sách người dùng. Vui lòng thử lại!' });
     } finally {
       setLoading(false);
     }
   };
 
-  // WARN-03 FIX: Implement real toggle using PUT API
   const handleToggle = async (u) => {
     try {
       await nguoiDungApi.capNhat(u.id, { ...u, kichHoat: !u.kichHoat });
       setUsers(prev => prev.map(x => x.id === u.id ? { ...x, kichHoat: !x.kichHoat } : x));
-      toast.success(u.kichHoat ? `Đã khóa tài khoản ${u.hoTen}` : `Đã kích hoạt ${u.hoTen}`);
+      showAlert({
+        type: 'success',
+        title: u.kichHoat ? 'Đã khóa tài khoản' : 'Đã kích hoạt tài khoản',
+        message: u.kichHoat ? `Tài khoản ${u.hoTen} đã bị khóa thành công.` : `Tài khoản ${u.hoTen} đã được kích hoạt trở lại.`,
+      });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Lỗi cập nhật trạng thái');
-    }
-  };
-  const handlePromote = async (u) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn thăng cấp ${u.hoTen} thành Giao Dịch Viên không?`)) return;
-    try {
-      const res = await nguoiDungApi.thangCapTeller(u.id);
-      setUsers(prev => prev.map(x => x.id === u.id ? res.data.data : x));
-      toast.success(`Đã thăng cấp ${u.hoTen} thành Giao Dịch Viên thành công!`);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Lỗi thăng cấp người dùng');
+      showAlert({ type: 'error', title: 'Lỗi cập nhật', message: error.response?.data?.message || 'Không thể cập nhật trạng thái tài khoản.' });
     }
   };
 
-  const handleDemote = async (u) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn hạ cấp ${u.hoTen} xuống thành Khách Hàng không?`)) return;
-    try {
-      const res = await nguoiDungApi.haQuyenUser(u.id);
-      setUsers(prev => prev.map(x => x.id === u.id ? res.data.data : x));
-      toast.success(`Đã hạ cấp ${u.hoTen} xuống thành Khách Hàng thành công!`);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Lỗi hạ cấp người dùng');
-    }
+  const handlePromote = (u) => {
+    showAlert({
+      type: 'warning',
+      title: 'Xác nhận thăng cấp',
+      message: `Bạn có chắc chắn muốn thăng cấp "${u.hoTen}" thành Giao Dịch Viên không?`,
+      confirmLabel: 'Thăng cấp',
+      cancelLabel: 'Hủy',
+      onConfirm: async () => {
+        try {
+          const res = await nguoiDungApi.thangCapTeller(u.id);
+          setUsers(prev => prev.map(x => x.id === u.id ? res.data.data : x));
+          showAlert({ type: 'success', title: 'Thăng cấp thành công', message: `${u.hoTen} đã được thăng cấp thành Giao Dịch Viên.` });
+        } catch (error) {
+          showAlert({ type: 'error', title: 'Lỗi thăng cấp', message: error.response?.data?.message || 'Không thể thực hiện thăng cấp.' });
+        }
+      },
+    });
   };
 
-  // WARN-03 FIX: Implement create using POST /api/nguoidung
+  const handleDemote = (u) => {
+    showAlert({
+      type: 'warning',
+      title: 'Xác nhận hạ cấp',
+      message: `Bạn có chắc chắn muốn hạ cấp "${u.hoTen}" xuống thành Khách Hàng không?`,
+      confirmLabel: 'Hạ cấp',
+      cancelLabel: 'Hủy',
+      onConfirm: async () => {
+        try {
+          const res = await nguoiDungApi.haQuyenUser(u.id);
+          setUsers(prev => prev.map(x => x.id === u.id ? res.data.data : x));
+          showAlert({ type: 'success', title: 'Hạ cấp thành công', message: `${u.hoTen} đã được hạ cấp xuống Khách Hàng.` });
+        } catch (error) {
+          showAlert({ type: 'error', title: 'Lỗi hạ cấp', message: error.response?.data?.message || 'Không thể thực hiện hạ cấp.' });
+        }
+      },
+    });
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!form.hoTen || !form.cmnd) {
-      toast.error('Vui lòng nhập đủ Họ Tên và CMND/CCCD');
+      showAlert({ type: 'warning', title: 'Thiếu thông tin', message: 'Vui lòng nhập đủ Họ Tên và CMND/CCCD.' });
       return;
     }
     if (!form.email || !form.matKhau) {
-      toast.error('Vui lòng nhập Email và Mật khẩu');
+      showAlert({ type: 'warning', title: 'Thiếu thông tin', message: 'Vui lòng nhập Email và Mật khẩu.' });
       return;
     }
     setSubmitting(true);
@@ -96,12 +112,12 @@ export default function Users() {
         email: form.email,
         matKhau: form.matKhau,
       });
-      toast.success(`Đã tạo hồ sơ ${form.hoTen} thành công!`);
+      showAlert({ type: 'success', title: 'Tạo hồ sơ thành công', message: `Hồ sơ người dùng "${form.hoTen}" đã được tạo thành công trong hệ thống.` });
       setForm({ hoTen: '', cmnd: '', soDienThoai: '', diaChi: '', loaiNguoiDung: 'nhan_vien', email: '', matKhau: '' });
       setShowForm(false);
       fetchUsers();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Lỗi tạo hồ sơ người dùng');
+      showAlert({ type: 'error', title: 'Lỗi tạo hồ sơ', message: error.response?.data?.message || 'Không thể tạo hồ sơ người dùng. Vui lòng thử lại.' });
     } finally {
       setSubmitting(false);
     }
@@ -226,6 +242,8 @@ export default function Users() {
           </tbody>
         </table>
       </div>
+
+      <AlertModal {...alertProps} />
     </div>
   );
 }

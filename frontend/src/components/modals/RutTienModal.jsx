@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { TrendingDown, XCircle, AlertTriangle } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { soTietKiemApi, thamSoApi, loaiTietKiemApi } from '../../services/api';
 import { Overlay, ModalHeader, InfoRow, ModalActions } from './GoiTienModal';
+import AlertModal, { useAlert } from '../AlertModal';
 
 const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val || 0) + ' ₫';
 
@@ -17,9 +17,10 @@ const tinhTienLai = (soDu, laiSuatNam, soNgay) => {
 };
 
 export default function RutTienModal({ so, onClose, onSuccess }) {
+  const { alertProps, showAlert } = useAlert();
   const [loai, setLoai] = useState(null);
   const [soNgayGuiToiThieu, setSoNgayGuiToiThieu] = useState(15);
-  
+
   const [soTienRut, setSoTienRut] = useState(so.soDuHienTai);
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -34,11 +35,11 @@ export default function RutTienModal({ so, onClose, onSuccess }) {
         ]);
         const lt = ltRes.data.data.find(l => l.id === so.loaiTietKiem.id);
         setLoai(lt);
-        
+
         const minDays = tsRes.data.data.find(ts => ts.khoa === 'soNgayGuiToiThieu')?.giaTri;
         if (minDays) setSoNgayGuiToiThieu(Number(minDays));
       } catch (error) {
-        toast.error("Lỗi lấy thông tin");
+        showAlert({ type: 'error', title: 'Lỗi tải thông tin', message: 'Không thể tải thông tin sổ tiết kiệm. Vui lòng thử lại!' });
       }
     };
     fetchDaTa();
@@ -83,14 +84,19 @@ export default function RutTienModal({ so, onClose, onSuccess }) {
     e.preventDefault();
     if (!kiemTra.ok && !kiemTra.warn) { setErrorMsg(kiemTra.msg); return; }
     if (!confirmed && kiemTra.warn) { setConfirmed(true); return; }
-    
+
     setLoading(true);
     try {
       await soTietKiemApi.rutTien(so.id, Number(soTienRut));
-      toast.success('Rút tiền thành công!');
-      onSuccess();
+      showAlert({
+        type: 'success',
+        title: 'Rút tiền thành công!',
+        message: `Đã rút ${formatTien(Number(soTienRut))} từ sổ ${so.maSo}. Tổng thực nhận: ${formatTien(tinhKetQua.tongNhan)}.`,
+        confirmLabel: 'Xác nhận',
+        onConfirm: onSuccess,
+      });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi rút tiền');
+      showAlert({ type: 'error', title: 'Lỗi rút tiền', message: error.response?.data?.message || 'Có lỗi xảy ra khi rút tiền. Vui lòng thử lại!' });
     } finally {
       setLoading(false);
     }
@@ -146,6 +152,7 @@ export default function RutTienModal({ so, onClose, onSuccess }) {
 
         <ModalActions loading={loading} onClose={onClose} submitLabel={confirmed || !kiemTra.warn ? 'Xác Nhận Rút Tiền' : 'Tôi Đã Hiểu, Tiếp Tục'} submitColor="rose" />
       </form>
+      <AlertModal {...alertProps} />
     </Overlay>
   );
 }
