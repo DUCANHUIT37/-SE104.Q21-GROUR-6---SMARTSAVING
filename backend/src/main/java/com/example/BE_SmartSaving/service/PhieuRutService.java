@@ -70,13 +70,13 @@ public class PhieuRutService {
         boolean tatToan;
         BigDecimal soTienRutThucTe;
 
+        int soNgayToiThieu = thamSoService.layThoiGianGuiToiThieu();
+        if (soNgayGui < soNgayToiThieu) {
+            throw new RuntimeException("Chưa đủ " + soNgayToiThieu + " ngày để rút tiền! (Đã gởi " + soNgayGui + " ngày)");
+        }
+
         if (loai.getKyHanThang() == 0) {
             // ── Không kỳ hạn ─────────────────────────────────────────────
-            int soNgayToiThieu = thamSoService.layThoiGianGuiToiThieu();
-            if (soNgayGui < soNgayToiThieu) {
-                throw new RuntimeException(
-                        "Chưa đủ " + soNgayToiThieu + " ngày để rút tiền!");
-            }
             if (soTienRut.compareTo(soDuHienTai) > 0) {
                 throw new RuntimeException("Số dư không đủ! Số dư hiện tại: " + soDuHienTai);
             }
@@ -186,13 +186,14 @@ public class PhieuRutService {
         boolean coTheRut = true;
         String lyDo = null;
 
+        int soNgayToiThieu = thamSoService.layThoiGianGuiToiThieu();
+        if (soNgayGui < soNgayToiThieu) {
+            coTheRut = false;
+            lyDo = "Chưa đủ " + soNgayToiThieu + " ngày để rút tiền! (Đã gởi " + soNgayGui + " ngày)";
+        }
+
         if (loai.getKyHanThang() == 0) {
             // Không kỳ hạn
-            int soNgayToiThieu = thamSoService.layThoiGianGuiToiThieu();
-            if (soNgayGui < soNgayToiThieu) {
-                coTheRut = false;
-                lyDo = "Chưa đủ " + soNgayToiThieu + " ngày để rút tiền! (Đã gởi " + soNgayGui + " ngày)";
-            }
             laiSuatApDung = loai.getLaiSuatNam();
         } else {
             // Có kỳ hạn
