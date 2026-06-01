@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PiggyBank, CalendarDays, ReceiptText, ShieldCheck, ArrowRight, Loader2, CheckCircle, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,7 +20,6 @@ export default function MoSo() {
   const navigate = useNavigate();
   const { alertProps, showAlert } = useAlert();
 
-  const isStaff = user?.quyenHan !== 'ROLE_khach_hang';
   const isStaff = user?.quyenHan !== 'ROLE_khach_hang';
   const [showCustomerModal, setShowCustomerModal] = useState(false);
 
