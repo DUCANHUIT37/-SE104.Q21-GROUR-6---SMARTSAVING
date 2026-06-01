@@ -113,6 +113,11 @@ public class SoTietKiemService {
             khachHang.setLoaiNguoiDung(NguoiDung.LoaiNguoiDungEnum.khach_hang);
             khachHang = nguoiDungRepository.save(khachHang);
         } else {
+            TaiKhoan tkKhachHang = taiKhoanRepository.findByNguoiDungId(khachHang.getId()).orElse(null);
+            if (tkKhachHang != null && !tkKhachHang.getKichHoat()) {
+                throw new RuntimeException("Tài khoản của khách hàng này đã bị khóa. Không thể thực hiện giao dịch!");
+            }
+            
             // Cập nhật địa chỉ nếu khách hàng chưa có và có gửi kèm địa chỉ mới
             String diaChiMoi = soTietKiem.getKhachHang().getDiaChi();
             if (diaChiMoi != null && !diaChiMoi.trim().isEmpty() && !diaChiMoi.equals("Chưa cập nhật")) {

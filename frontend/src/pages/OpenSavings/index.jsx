@@ -69,6 +69,13 @@ export default function MoSo() {
       const res = await nguoiDungApi.layTheoCmnd(form.cmnd.trim());
       const found = res.data.data;
       if (found) {
+        if (found.kichHoat === false) {
+          setKhachHangTimThay(null);
+          setCmndNotFound(true);
+          setForm(f => ({ ...f, hoTen: '', diaChi: '', soDienThoai: '' }));
+          showAlert({ type: 'error', title: 'Tài khoản bị khóa', message: 'Khách hàng này đã bị khóa tài khoản. Không thể mở sổ tiết kiệm!' });
+          return;
+        }
         setKhachHangTimThay(found);
         setCmndNotFound(false);
         setForm(f => ({ 
@@ -94,6 +101,10 @@ export default function MoSo() {
   };
 
   const handleCmndSelect = (user) => {
+    if (user.kichHoat === false) {
+      showAlert({ type: 'error', title: 'Tài khoản bị khóa', message: 'Khách hàng này đã bị khóa tài khoản. Không thể chọn!' });
+      return;
+    }
     setKhachHangTimThay(user);
     setCmndNotFound(false);
     setForm(f => ({ 
@@ -145,6 +156,11 @@ export default function MoSo() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (khachHangTimThay && khachHangTimThay.kichHoat === false) {
+      showAlert({ type: 'error', title: 'Tài khoản bị khóa', message: 'Tài khoản của khách hàng này đã bị khóa. Không thể thực hiện giao dịch!' });
+      return;
+    }
 
     if (Number(form.soTienBanDau) < soTienToiThieu) {
       showAlert({ type: 'warning', title: 'Số tiền không hợp lệ', message: `Số tiền gửi phải lớn hơn hoặc bằng ${soTienToiThieu.toLocaleString('vi-VN')} VNĐ!` });
