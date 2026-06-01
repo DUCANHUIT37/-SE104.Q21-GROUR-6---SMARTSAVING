@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 import { Loader2, RefreshCw } from 'lucide-react';
 import BCPTIcon from '../../assets/BaoCaoKeToan_BaoCaoPhanTich.svg';
 import TVGVIcon from '../../assets/BaoCaoKeToan_TongVonGuiVao.svg';
@@ -136,25 +137,97 @@ function FinancialReport() {
       );
 
   // ─── Excel Export ─────────────────────────────────────────────────────────
-  const handleExportExcel = () => {
-    const exportData = isNgayTab
+  const handleExportExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet(activeTab);
+
+    // 1. Define Columns
+    if (isNgayTab) {
+      sheet.columns = [
+        { header: 'Loại Tiết Kiệm', key: 'tenLoaiTietKiem' },
+        { header: 'Tổng Thu (đ)', key: 'tongThu' },
+        { header: 'Tổng Chi (đ)', key: 'tongChi' },
+        { header: 'Chênh Lệch (đ)', key: 'chenhLech' },
+      ];
+    } else {
+      sheet.columns = [
+        { header: 'Loại Tiết Kiệm', key: 'tenLoaiTietKiem' },
+        { header: 'Ngày', key: 'ngay' },
+        { header: 'Số Sổ Mở', key: 'soSoMo' },
+        { header: 'Số Sổ Đóng', key: 'soSoDong' },
+        { header: 'Chênh Lệch', key: 'chenhLech' },
+      ];
+    }
+
+    // 2. Add Rows
+    const rows = isNgayTab
       ? ngayData?.map(r => ({
-          'Loại Tiết Kiệm': r?.tenLoaiTietKiem,
-          'Tổng Thu (đ)': Number(r?.tongThu ?? 0),
-          'Tổng Chi (đ)': Number(r?.tongChi ?? 0),
-          'Chênh Lệch (đ)': Number(r?.chenhLech ?? 0),
+          tenLoaiTietKiem: r?.tenLoaiTietKiem,
+          tongThu: Number(r?.tongThu ?? 0),
+          tongChi: Number(r?.tongChi ?? 0),
+          chenhLech: Number(r?.chenhLech ?? 0),
         }))
       : thangData?.map(r => ({
-          'Loại Tiết Kiệm': r?.tenLoaiTietKiem,
-          'Ngày': r?.ngay,
-          'Số Sổ Mở': r?.soSoMo ?? 0,
-          'Số Sổ Đóng': r?.soSoDong ?? 0,
-          'Chênh Lệch': r?.chenhLech ?? 0,
+          tenLoaiTietKiem: r?.tenLoaiTietKiem,
+          ngay: r?.ngay,
+          soSoMo: Number(r?.soSoMo ?? 0),
+          soSoDong: Number(r?.soSoDong ?? 0),
+          chenhLech: Number(r?.chenhLech ?? 0),
         }));
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, activeTab);
-    XLSX.writeFile(wb, `BaoCao_${activeTab.replace(/ /g,'_')}.xlsx`);
+    
+    if (rows && rows.length > 0) {
+      sheet.addRows(rows);
+    }
+
+    // 3. Auto-fit columns and apply Numerical Formats
+    sheet.columns.forEach(column => {
+      let maxLen = column.header ? column.header.length : 10;
+      column.eachCell({ includeEmpty: true }, (cell, rowNumber) => {
+        if (rowNumber > 1) { // Data rows
+          if (typeof cell.value === 'number') {
+            cell.numFmt = '#,##0'; // Prevents E-notation and adds thousand separators
+          }
+          if (cell.value) {
+            maxLen = Math.max(maxLen, cell.value.toString().length);
+          }
+        }
+      });
+      column.width = maxLen + 5; // Add padding for readability
+    });
+
+    // 4. Apply Visual Styles (Header & Borders)
+    const headerRow = sheet.getRow(1);
+    headerRow.eachCell(cell => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF3498DB' } // Blue Background
+      };
+      cell.font = {
+        bold: true,
+        color: { argb: 'FFFFFFFF' } // White Text
+      };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = {
+        top: { style: 'thin' }, left: { style: 'thin' },
+        bottom: { style: 'thin' }, right: { style: 'thin' }
+      };
+    });
+
+    sheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      if (rowNumber > 1) {
+        row.eachCell(cell => {
+          cell.border = {
+            top: { style: 'thin' }, left: { style: 'thin' },
+            bottom: { style: 'thin' }, right: { style: 'thin' }
+          };
+        });
+      }
+    });
+
+    // 5. Generate and Download
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `BaoCao_${activeTab.replace(/ /g, '_')}.xlsx`);
   };
 
   // ─── Summary cards config ─────────────────────────────────────────────────
