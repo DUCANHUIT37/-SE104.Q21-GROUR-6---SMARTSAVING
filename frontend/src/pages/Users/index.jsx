@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, CheckCircle, XCircle, Shield, Loader2, X } from 'lucide-react';
+import { UserPlus, CheckCircle, XCircle, Shield, Loader2, X, Edit2, Save } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { nguoiDungApi } from '../../services/api';
 import { cn } from '../../lib/utils';
@@ -24,7 +24,41 @@ export default function Users() {
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [isEditingUser, setIsEditingUser] = useState(false);
+  const [editUserForm, setEditUserForm] = useState({});
+  const [updatingUser, setUpdatingUser] = useState(false);
   const { user: currentUser } = useAuth();
+
+  const handleOpenEdit = () => {
+    setEditUserForm({
+      hoTen: selectedUser.hoTen || '',
+      soDienThoai: selectedUser.soDienThoai || '',
+      diaChi: selectedUser.diaChi || '',
+      taoLuc: selectedUser.taoLuc ? selectedUser.taoLuc.substring(0, 16) : ''
+    });
+    setIsEditingUser(true);
+  };
+
+  const handleUpdateUser = async () => {
+    try {
+      setUpdatingUser(true);
+      const payload = { ...editUserForm };
+      if (payload.taoLuc) {
+         payload.taoLuc = payload.taoLuc + ':00';
+      } else {
+         delete payload.taoLuc;
+      }
+      const res = await nguoiDungApi.capNhat(selectedUser.id, payload);
+      showAlert({ type: 'success', title: 'Cập nhật thành công', message: 'Thông tin người dùng đã được lưu lại.' });
+      setUsers(prev => prev.map(u => u.id === selectedUser.id ? res.data.data : u));
+      setSelectedUser(res.data.data);
+      setIsEditingUser(false);
+    } catch (error) {
+      showAlert({ type: 'error', title: 'Lỗi cập nhật', message: error.response?.data?.message || 'Không thể cập nhật thông tin.' });
+    } finally {
+      setUpdatingUser(false);
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -274,11 +308,11 @@ export default function Users() {
       <AlertModal {...alertProps} />
 
       {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedUser(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => { setSelectedUser(null); setIsEditingUser(false); }}>
           <div className="bg-white dark:bg-[#1f2937] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-              <h3 className="font-bold text-lg text-gray-900 dark:text-white">Chi tiết Người Dùng</h3>
-              <button onClick={() => setSelectedUser(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 transition-colors">
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white">{isEditingUser ? 'Chỉnh sửa Người Dùng' : 'Chi tiết Người Dùng'}</h3>
+              <button onClick={() => { setSelectedUser(null); setIsEditingUser(false); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -287,8 +321,12 @@ export default function Users() {
                 <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-bold text-2xl">
                   {selectedUser.hoTen?.charAt(0)?.toUpperCase()}
                 </div>
-                <div>
-                  <h4 className="text-xl font-bold text-gray-900 dark:text-white">{selectedUser.hoTen}</h4>
+                <div className="flex-1">
+                  {isEditingUser ? (
+                    <input type="text" value={editUserForm.hoTen} onChange={e => setEditUserForm(f => ({ ...f, hoTen: e.target.value }))} className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111827] text-gray-900 dark:text-white font-bold text-lg outline-none focus:border-emerald-500 mb-1" placeholder="Họ và tên" />
+                  ) : (
+                    <h4 className="text-xl font-bold text-gray-900 dark:text-white">{selectedUser.hoTen}</h4>
+                  )}
                   <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email || 'Chưa cập nhật email'}</p>
                 </div>
               </div>
@@ -304,7 +342,11 @@ export default function Users() {
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 mb-1">Số điện thoại</p>
-                  <p className="font-semibold text-gray-900 dark:text-white">{selectedUser.soDienThoai || 'Chưa cập nhật'}</p>
+                  {isEditingUser ? (
+                    <input type="text" value={editUserForm.soDienThoai} onChange={e => setEditUserForm(f => ({ ...f, soDienThoai: e.target.value }))} className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111827] text-gray-900 dark:text-white font-semibold outline-none focus:border-emerald-500" placeholder="Số điện thoại" />
+                  ) : (
+                    <p className="font-semibold text-gray-900 dark:text-white">{selectedUser.soDienThoai || 'Chưa cập nhật'}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 mb-1">Vai trò</p>
@@ -314,7 +356,11 @@ export default function Users() {
                 </div>
                 <div className="col-span-2">
                   <p className="text-gray-500 dark:text-gray-400 mb-1">Địa chỉ</p>
-                  <p className="font-semibold text-gray-900 dark:text-white">{selectedUser.diaChi || 'Chưa cập nhật'}</p>
+                  {isEditingUser ? (
+                    <input type="text" value={editUserForm.diaChi} onChange={e => setEditUserForm(f => ({ ...f, diaChi: e.target.value }))} className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111827] text-gray-900 dark:text-white font-semibold outline-none focus:border-emerald-500" placeholder="Địa chỉ" />
+                  ) : (
+                    <p className="font-semibold text-gray-900 dark:text-white">{selectedUser.diaChi || 'Chưa cập nhật'}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 mb-1">Trạng thái</p>
@@ -325,16 +371,38 @@ export default function Users() {
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 mb-1">Ngày tạo</p>
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    {selectedUser.taoLuc ? new Date(selectedUser.taoLuc).toLocaleString('vi-VN') : 'Không rõ'}
-                  </p>
+                  {isEditingUser ? (
+                    <input type="datetime-local" value={editUserForm.taoLuc} onChange={e => setEditUserForm(f => ({ ...f, taoLuc: e.target.value }))} className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111827] text-gray-900 dark:text-white font-semibold outline-none focus:border-emerald-500" />
+                  ) : (
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {selectedUser.taoLuc ? new Date(selectedUser.taoLuc).toLocaleString('vi-VN') : 'Không rõ'}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
-            <div className="px-6 py-4 bg-gray-50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-gray-800 flex justify-end">
-              <button onClick={() => setSelectedUser(null)} className="px-4 py-2 bg-white dark:bg-[#1f2937] border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm transition-colors">
-                Đóng
-              </button>
+            <div className="px-6 py-4 bg-gray-50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3">
+              {isEditingUser ? (
+                <>
+                  <button onClick={() => setIsEditingUser(false)} className="px-4 py-2 bg-white dark:bg-[#1f2937] border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm transition-colors">
+                    Hủy
+                  </button>
+                  <button onClick={handleUpdateUser} disabled={updatingUser} className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-semibold text-sm transition-colors disabled:opacity-50">
+                    {updatingUser ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Lưu
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={handleOpenEdit} className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold text-sm transition-colors">
+                    <Edit2 className="w-4 h-4" />
+                    Chỉnh sửa
+                  </button>
+                  <button onClick={() => { setSelectedUser(null); setIsEditingUser(false); }} className="px-4 py-2 bg-white dark:bg-[#1f2937] border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm transition-colors">
+                    Đóng
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

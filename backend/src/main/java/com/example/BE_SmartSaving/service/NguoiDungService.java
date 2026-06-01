@@ -172,6 +172,9 @@ public class NguoiDungService {
         existing.setHoTen(thongTinMoi.getHoTen());
         existing.setDiaChi(thongTinMoi.getDiaChi());
         existing.setSoDienThoai(thongTinMoi.getSoDienThoai());
+        if (thongTinMoi.getTaoLuc() != null) {
+            existing.setTaoLuc(thongTinMoi.getTaoLuc());
+        }
         return toDTO(nguoiDungRepository.save(existing));
     }
 

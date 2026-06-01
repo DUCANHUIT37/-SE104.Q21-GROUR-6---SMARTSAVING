@@ -3,6 +3,7 @@ package com.example.BE_SmartSaving.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Entity
 @Table(name = "NguoiDung")
@@ -29,6 +30,7 @@ public class NguoiDung {
     @Column(name = "loai_nguoi_dung", nullable = false)
     private LoaiNguoiDungEnum loaiNguoiDung = LoaiNguoiDungEnum.khach_hang;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Column(name = "tao_luc", nullable = false)
     private LocalDateTime taoLuc = LocalDateTime.now();
 
