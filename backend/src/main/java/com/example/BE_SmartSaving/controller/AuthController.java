@@ -17,6 +17,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -101,5 +103,14 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body(ApiResponse.error(500, "Lỗi server: " + e.getMessage()));
         }
+    }
+
+    @GetMapping("/ping")
+    public ResponseEntity<Map<String, String>> pingSystem() {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "UP");
+        response.put("message", "SmartSavings Backend is awake and active.");
+        response.put("timestamp", String.valueOf(System.currentTimeMillis()));
+        return ResponseEntity.ok(response);
     }
 }
