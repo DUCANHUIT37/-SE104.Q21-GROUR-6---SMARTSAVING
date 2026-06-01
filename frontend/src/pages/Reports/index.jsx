@@ -81,21 +81,21 @@ export default function FinancialReport() {
         const res = await baoCaoApi.theo_thang(nam, thang);
         const data = res.data?.data ?? [];
         setThangData(data);
-        setAvailableLoai([...new Set(data.map(r => r.tenLoaiTietKiem).filter(Boolean))]);
+        setAvailableLoai([...new Set(data?.map(r => r?.tenLoaiTietKiem).filter(Boolean))]);
         setNgayData([]);
       } else if (tab === 'Tháng trước') {
         const { nam, thang } = getYearMonth(-1);
         const res = await baoCaoApi.theo_thang(nam, thang);
         const data = res.data?.data ?? [];
         setThangData(data);
-        setAvailableLoai([...new Set(data.map(r => r.tenLoaiTietKiem).filter(Boolean))]);
+        setAvailableLoai([...new Set(data?.map(r => r?.tenLoaiTietKiem).filter(Boolean))]);
         setNgayData([]);
       } else {
         // Tùy chọn — user-selected month/year
         const res = await baoCaoApi.theo_thang(customYear, customMonth);
         const data = res.data?.data ?? [];
         setThangData(data);
-        setAvailableLoai([...new Set(data.map(r => r.tenLoaiTietKiem).filter(Boolean))]);
+        setAvailableLoai([...new Set(data?.map(r => r?.tenLoaiTietKiem).filter(Boolean))]);
         setNgayData([]);
       }
     } catch (err) {
@@ -114,37 +114,37 @@ export default function FinancialReport() {
   // ─── Chart data ───────────────────────────────────────────────────────────
   const chartData = isNgayTab
     // Daily: one bar per savings type
-    ? ngayData.map(r => ({
-        ngay: r.tenLoaiTietKiem,
-        thu: Math.round(Number(r.tongThu ?? 0) / 1_000_000),
-        chi: Math.round(Number(r.tongChi ?? 0) / 1_000_000),
+    ? ngayData?.map(r => ({
+        ngay: r?.tenLoaiTietKiem,
+        thu: Math.round(Number(r?.tongThu ?? 0) / 1_000_000),
+        chi: Math.round(Number(r?.tongChi ?? 0) / 1_000_000),
       }))
     // Monthly: one bar per date
     : Object.values(
-        filteredThangData.reduce((acc, r) => {
-          const key = r.ngay;
-          if (!acc[key]) acc[key] = { ngay: r.ngay?.slice(8, 10) + '/' + r.ngay?.slice(5, 7), thu: 0, chi: 0 };
-          acc[key].thu += Number(r.soSoMo ?? 0);
-          acc[key].chi += Number(r.soSoDong ?? 0);
+        filteredThangData?.reduce((acc, r) => {
+          const key = r?.ngay;
+          if (!acc[key]) acc[key] = { ngay: r?.ngay?.slice(8, 10) + '/' + r?.ngay?.slice(5, 7), thu: 0, chi: 0 };
+          acc[key].thu += Number(r?.soSoMo ?? 0);
+          acc[key].chi += Number(r?.soSoDong ?? 0);
           return acc;
-        }, {})
+        }, {}) || {}
       );
 
   // ─── Excel Export ─────────────────────────────────────────────────────────
   const handleExportExcel = () => {
     const exportData = isNgayTab
-      ? ngayData.map(r => ({
-          'Loại Tiết Kiệm': r.tenLoaiTietKiem,
-          'Tổng Thu (đ)': Number(r.tongThu ?? 0),
-          'Tổng Chi (đ)': Number(r.tongChi ?? 0),
-          'Chênh Lệch (đ)': Number(r.chenhLech ?? 0),
+      ? ngayData?.map(r => ({
+          'Loại Tiết Kiệm': r?.tenLoaiTietKiem,
+          'Tổng Thu (đ)': Number(r?.tongThu ?? 0),
+          'Tổng Chi (đ)': Number(r?.tongChi ?? 0),
+          'Chênh Lệch (đ)': Number(r?.chenhLech ?? 0),
         }))
-      : thangData.map(r => ({
-          'Loại Tiết Kiệm': r.tenLoaiTietKiem,
-          'Ngày': r.ngay,
-          'Số Sổ Mở': r.soSoMo,
-          'Số Sổ Đóng': r.soSoDong,
-          'Chênh Lệch': r.chenhLech,
+      : thangData?.map(r => ({
+          'Loại Tiết Kiệm': r?.tenLoaiTietKiem,
+          'Ngày': r?.ngay,
+          'Số Sổ Mở': r?.soSoMo ?? 0,
+          'Số Sổ Đóng': r?.soSoDong ?? 0,
+          'Chênh Lệch': r?.chenhLech ?? 0,
         }));
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
@@ -426,21 +426,21 @@ export default function FinancialReport() {
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                     {isNgayTab
-                      ? ngayData.map((r, i) => (
+                      ? ngayData?.map((r, i) => (
                           <tr key={i} className="hover:bg-gray-50 dark:hover:bg-[#111827] transition-colors">
-                            <td className="px-6 py-3 font-medium text-gray-900 dark:text-white">{r.tenLoaiTietKiem}</td>
-                            <td className="px-6 py-3 text-right text-emerald-600 dark:text-emerald-400 font-semibold">{formatTien(r.tongThu)}</td>
-                            <td className="px-6 py-3 text-right text-rose-500 font-semibold">{formatTien(r.tongChi)}</td>
-                            <td className={`px-6 py-3 text-right font-bold ${Number(r.chenhLech) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{formatTien(r.chenhLech)}</td>
+                            <td className="px-6 py-3 font-medium text-gray-900 dark:text-white">{r?.tenLoaiTietKiem}</td>
+                            <td className="px-6 py-3 text-right text-emerald-600 dark:text-emerald-400 font-semibold">{formatTien(r?.tongThu ?? 0)}</td>
+                            <td className="px-6 py-3 text-right text-rose-500 font-semibold">{formatTien(r?.tongChi ?? 0)}</td>
+                            <td className={`px-6 py-3 text-right font-bold ${Number(r?.chenhLech ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{formatTien(r?.chenhLech ?? 0)}</td>
                           </tr>
                         ))
-                      : filteredThangData.map((r, i) => (
+                      : filteredThangData?.map((r, i) => (
                           <tr key={i} className="hover:bg-gray-50 dark:hover:bg-[#111827] transition-colors">
-                            <td className="px-6 py-3 font-medium text-gray-900 dark:text-white">{r.tenLoaiTietKiem}</td>
-                            <td className="px-6 py-3 text-center text-gray-500">{r.ngay}</td>
-                            <td className="px-6 py-3 text-right text-emerald-600 dark:text-emerald-400 font-semibold">{r.soSoMo}</td>
-                            <td className="px-6 py-3 text-right text-rose-500 font-semibold">{r.soSoDong}</td>
-                            <td className={`px-6 py-3 text-right font-bold ${r.chenhLech >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{r.chenhLech}</td>
+                            <td className="px-6 py-3 font-medium text-gray-900 dark:text-white">{r?.tenLoaiTietKiem}</td>
+                            <td className="px-6 py-3 text-center text-gray-500">{r?.ngay}</td>
+                            <td className="px-6 py-3 text-right text-emerald-600 dark:text-emerald-400 font-semibold">{r?.soSoMo ?? 0}</td>
+                            <td className="px-6 py-3 text-right text-rose-500 font-semibold">{r?.soSoDong ?? 0}</td>
+                            <td className={`px-6 py-3 text-right font-bold ${(r?.chenhLech ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{r?.chenhLech ?? 0}</td>
                           </tr>
                         ))
                     }

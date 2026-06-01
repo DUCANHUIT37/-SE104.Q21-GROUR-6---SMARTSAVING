@@ -47,13 +47,18 @@ public class BaoCaoService {
             // Thu: tiền mở sổ mới + tiền gởi thêm trong ngày
             BigDecimal thuMoSo = phieuGoiRepository
                     .tinhTongMoSoTheoLoaiVaNgay(loai.getId(), ngayBaoCao);
+            thuMoSo = java.util.Objects.requireNonNullElse(thuMoSo, BigDecimal.ZERO);
+            
             BigDecimal thuGoiThem = phieuGoiRepository
                     .tinhTongThuTheoLoaiVaNgay(loai.getId(), ngayBaoCao);
+            thuGoiThem = java.util.Objects.requireNonNullElse(thuGoiThem, BigDecimal.ZERO);
+            
             BigDecimal tongThu = thuMoSo.add(thuGoiThem);
 
             // Chi: tiền rút ra trong ngày
             BigDecimal tongChi = phieuRutRepository
                     .tinhTongChiTheoLoaiVaNgay(loai.getId(), ngayBaoCao);
+            tongChi = java.util.Objects.requireNonNullElse(tongChi, BigDecimal.ZERO);
 
             dto.setTongThu(tongThu);
             dto.setTongChi(tongChi);
@@ -89,13 +94,15 @@ public class BaoCaoService {
         java.util.Map<String, Long> mapSoMo = new java.util.HashMap<>();
         for (Object[] row : kqSoMo) {
             String key = row[0] + "_" + row[1].toString();
-            mapSoMo.put(key, ((Number) row[2]).longValue());
+            long count = (row[2] != null) ? ((Number) row[2]).longValue() : 0L;
+            mapSoMo.put(key, count);
         }
 
         java.util.Map<String, Long> mapSoDong = new java.util.HashMap<>();
         for (Object[] row : kqSoDong) {
             String key = row[0] + "_" + row[1].toString();
-            mapSoDong.put(key, ((Number) row[2]).longValue());
+            long count = (row[2] != null) ? ((Number) row[2]).longValue() : 0L;
+            mapSoDong.put(key, count);
         }
 
         for (LoaiTietKiem loai : danhSachLoai) {
@@ -126,10 +133,15 @@ public class BaoCaoService {
         long tongSoTietKiem = soTietKiemRepository.count();
         long tongKhachHang = nguoiDungRepository.findByLoaiNguoiDung(com.example.BE_SmartSaving.model.NguoiDung.LoaiNguoiDungEnum.khach_hang).size();
         BigDecimal tongSoDu = soTietKiemRepository.sumSoDuHienTai();
+        tongSoDu = java.util.Objects.requireNonNullElse(tongSoDu, BigDecimal.ZERO);
         
         LocalDate today = LocalDate.now();
         BigDecimal thuGoiThem = phieuGoiRepository.tinhTongThuGoiThemTrongNgay(today);
+        thuGoiThem = java.util.Objects.requireNonNullElse(thuGoiThem, BigDecimal.ZERO);
+        
         BigDecimal thuMoSo = phieuGoiRepository.tinhTongThuMoSoTrongNgay(today);
+        thuMoSo = java.util.Objects.requireNonNullElse(thuMoSo, BigDecimal.ZERO);
+        
         BigDecimal doanhThuHomNay = thuGoiThem.add(thuMoSo);
         
         return com.example.BE_SmartSaving.dto.TongQuanDTO.builder()
