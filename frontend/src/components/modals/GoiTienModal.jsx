@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { XCircle, TrendingUp, AlertCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { soTietKiemApi, loaiTietKiemApi, thamSoApi } from '../../services/api';
 import { cn } from '../../lib/utils';
+import AlertModal, { useAlert } from '../AlertModal';
 
 const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val || 0) + ' ₫';
 
 export default function GoiTienModal({ so, onClose, onSuccess }) {
+  const { alertProps, showAlert } = useAlert();
   const [loai, setLoai] = useState(null);
   const [soTienGuiThemToiThieu, setSoTienGuiThemToiThieu] = useState(100000);
-  
+
   const [soTien, setSoTien] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,11 +24,11 @@ export default function GoiTienModal({ so, onClose, onSuccess }) {
         ]);
         const lt = ltRes.data.data.find(l => l.id === so.loaiTietKiem.id);
         setLoai(lt);
-        
+
         const minAmount = tsRes.data.data.find(ts => ts.khoa === 'soTienGuiThemToiThieu')?.giaTri;
         if (minAmount) setSoTienGuiThemToiThieu(Number(minAmount));
       } catch (err) {
-        toast.error('Lỗi tải dữ liệu');
+        showAlert({ type: 'error', title: 'Lỗi tải dữ liệu', message: 'Không thể tải thông tin sổ. Vui lòng thử lại!' });
       }
     };
     fetchData();
@@ -56,14 +57,19 @@ export default function GoiTienModal({ so, onClose, onSuccess }) {
       return;
     }
     if (canhBaoKyHan) { setError('Không thể gởi thêm khi chưa đến kỳ hạn tính lãi.'); return; }
-    
+
     setLoading(true);
     try {
       await soTietKiemApi.guiThemTien(so.id, amount);
-      toast.success('Gởi thêm tiền thành công!');
-      onSuccess();
+      showAlert({
+        type: 'success',
+        title: 'Gởi tiền thành công!',
+        message: `Đã gởi thêm ${new Intl.NumberFormat('vi-VN').format(amount)} ₫ vào sổ ${so.maSo}.`,
+        confirmLabel: 'Xác nhận',
+        onConfirm: onSuccess,
+      });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Lỗi khi gởi thêm tiền');
+      showAlert({ type: 'error', title: 'Lỗi gởi tiền', message: err.response?.data?.message || 'Có lỗi xảy ra khi gởi thêm tiền. Vui lòng thử lại!' });
     } finally {
       setLoading(false);
     }
@@ -107,6 +113,7 @@ export default function GoiTienModal({ so, onClose, onSuccess }) {
 
         <ModalActions loading={loading} onClose={onClose} submitLabel="Xác Nhận Gởi Tiền" submitColor="emerald" />
       </form>
+      <AlertModal {...alertProps} />
     </Overlay>
   );
 }

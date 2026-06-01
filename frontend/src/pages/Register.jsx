@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 import logoIcon from '../assets/Logo.svg';
 import api from '../services/api';
+import AlertModal, { useAlert } from '../components/AlertModal';
 
 export default function Register() {
   const navigate = useNavigate();
+  const { alertProps, showAlert } = useAlert();
+
   const [formData, setFormData] = useState({
     hoTen: '',
     cmnd: '',
@@ -14,6 +17,8 @@ export default function Register() {
     xacNhanMatKhau: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
 
   const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]{6,}$/;
 
@@ -27,7 +32,7 @@ export default function Register() {
   };
 
   const strength = getPasswordStrength(formData.matKhau);
-  
+
   const getStrengthBarColor = () => {
     if (strength === 1) return 'bg-red-500 w-1/3';
     if (strength === 2) return 'bg-yellow-500 w-2/3';
@@ -50,17 +55,17 @@ export default function Register() {
     e.preventDefault();
 
     if (!formData.hoTen || !formData.cmnd || !formData.email || !formData.matKhau || !formData.xacNhanMatKhau) {
-      toast.error('Vui lòng điền đầy đủ thông tin!');
+      showAlert({ type: 'warning', title: 'Thiếu thông tin', message: 'Vui lòng điền đầy đủ tất cả thông tin trước khi đăng ký!' });
       return;
     }
 
     if (formData.matKhau !== formData.xacNhanMatKhau) {
-      toast.error('Mật khẩu xác nhận không khớp!');
+      showAlert({ type: 'error', title: 'Mật khẩu không khớp', message: 'Mật khẩu xác nhận không khớp với mật khẩu đã nhập. Vui lòng kiểm tra lại!' });
       return;
     }
 
     if (!passwordRegex.test(formData.matKhau)) {
-      toast.error('Mật khẩu chưa đạt chuẩn bảo mật!');
+      showAlert({ type: 'error', title: 'Mật khẩu không đủ mạnh', message: 'Mật khẩu cần ít nhất 6 ký tự, bao gồm 1 chữ hoa, 1 chữ số và 1 ký tự đặc biệt (!@#$%...).' });
       return;
     }
 
@@ -72,14 +77,19 @@ export default function Register() {
         email: formData.email,
         matKhau: formData.matKhau
       });
-      
-      if (res.data && res.data.success) {
-        toast.success('Khởi tạo tài khoản thành công! Vui lòng đăng nhập.');
-        navigate('/login');
+
+      if (res.data && res.data.statusCode === 200) {
+        showAlert({
+          type: 'success',
+          title: 'Đăng ký thành công! 🎉',
+          message: 'Tài khoản của bạn đã được tạo thành công. Hãy đăng nhập để bắt đầu sử dụng SmartSavings.',
+          confirmLabel: 'Đăng nhập ngay',
+          onConfirm: () => navigate('/login'),
+        });
       }
     } catch (error) {
-      const msg = error.response?.data?.message || 'Có lỗi xảy ra khi đăng ký';
-      toast.error(msg);
+      const msg = error.response?.data?.message || 'Có lỗi xảy ra khi đăng ký. Vui lòng thử lại!';
+      showAlert({ type: 'error', title: 'Đăng ký thất bại', message: msg });
     } finally {
       setIsSubmitting(false);
     }
@@ -89,7 +99,7 @@ export default function Register() {
 
   return (
     <div className="flex h-screen w-full font-sans bg-[#05080D]">
-      
+
       {/* Form Đăng Ký */}
       <div className="w-full lg:w-1/3 bg-[#020408] flex flex-col justify-center p-12 border-r border-gray-900 overflow-y-auto">
         <div className="max-w-sm mx-auto w-full py-8">
@@ -117,10 +127,28 @@ export default function Register() {
               <input name="email" value={formData.email} onChange={handleChange} type="email" placeholder="hello@example.com" className="w-full bg-[#0B131E] border border-gray-800 rounded-lg p-3 text-white text-sm focus:border-[#0085D0] outline-none transition-all" />
             </div>
 
+            {/* Mật khẩu với toggle ẩn/hiện */}
             <div>
               <label className="block text-gray-400 text-[10px] uppercase font-bold mb-2">Mật khẩu bảo mật</label>
-              <input name="matKhau" value={formData.matKhau} onChange={handleChange} type="password" placeholder="Tối thiểu 6 ký tự, 1 hoa, 1 số, 1 ký tự đặc biệt" className="w-full bg-[#0B131E] border border-gray-800 rounded-lg p-3 text-white text-sm focus:border-[#0085D0] outline-none transition-all" />
-              
+              <div className="relative">
+                <input
+                  name="matKhau"
+                  value={formData.matKhau}
+                  onChange={handleChange}
+                  type={showPass ? 'text' : 'password'}
+                  placeholder="Tối thiểu 6 ký tự, 1 hoa, 1 số, 1 ký tự đặc biệt"
+                  className="w-full bg-[#0B131E] border border-gray-800 rounded-lg p-3 pr-11 text-white text-sm focus:border-[#0085D0] outline-none transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+
               {/* Password Strength Meter */}
               {formData.matKhau.length > 0 && (
                 <div className="mt-2">
@@ -134,19 +162,37 @@ export default function Register() {
               )}
             </div>
 
+            {/* Xác nhận mật khẩu với toggle ẩn/hiện */}
             <div>
               <label className="block text-gray-400 text-[10px] uppercase font-bold mb-2">Xác nhận Mật khẩu</label>
-              <input name="xacNhanMatKhau" value={formData.xacNhanMatKhau} onChange={handleChange} type="password" placeholder="Nhập lại mật khẩu" className="w-full bg-[#0B131E] border border-gray-800 rounded-lg p-3 text-white text-sm focus:border-[#0085D0] outline-none transition-all" />
+              <div className="relative">
+                <input
+                  name="xacNhanMatKhau"
+                  value={formData.xacNhanMatKhau}
+                  onChange={handleChange}
+                  type={showConfirmPass ? 'text' : 'password'}
+                  placeholder="Nhập lại mật khẩu"
+                  className="w-full bg-[#0B131E] border border-gray-800 rounded-lg p-3 pr-11 text-white text-sm focus:border-[#0085D0] outline-none transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPass((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
               {formData.xacNhanMatKhau.length > 0 && formData.matKhau !== formData.xacNhanMatKhau && (
                 <p className="text-red-500 text-[10px] mt-1">Mật khẩu xác nhận không khớp!</p>
               )}
             </div>
 
-            <button 
+            <button
               disabled={isSubmitting || !isValid}
               className={`w-full font-bold py-3 rounded-lg mt-6 shadow-lg transition-all active:scale-95 ${
-                isValid && !isSubmitting 
-                  ? 'bg-[#0085D0] hover:bg-[#0071b1] text-white' 
+                isValid && !isSubmitting
+                  ? 'bg-[#0085D0] hover:bg-[#0071b1] text-white'
                   : 'bg-gray-800 text-gray-500 cursor-not-allowed'
               }`}
             >
@@ -194,7 +240,9 @@ export default function Register() {
           </div>
         </div>
       </div>
-      
+
+      {/* Alert Popup */}
+      <AlertModal {...alertProps} />
     </div>
   );
 }

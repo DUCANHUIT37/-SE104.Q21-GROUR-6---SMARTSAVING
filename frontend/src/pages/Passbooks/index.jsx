@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import toast from 'react-hot-toast';
+import AlertModal, { useAlert } from '../../components/AlertModal';
 import { 
   Search, PlusCircle, Download, PiggyBank,
   X, ArrowDownLeft, ArrowUpRight, Loader2, AlertTriangle,
@@ -38,6 +38,7 @@ const mapDtoToUi = (dto) => ({
 export default function Passbooks() {
   const { user, isTeller, isAdmin, isKhachHang } = useAuth();
   const navigate = useNavigate();
+  const { alertProps, showAlert } = useAlert();
   const [search, setSearch] = useState('');
   const [trangThaiFilter, setTrangThaiFilter] = useState('ALL');
 
@@ -224,10 +225,10 @@ export default function Passbooks() {
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      toast.success("Xuất file Excel thành công!");
+      showAlert({ type: 'success', title: 'Xuất file thành công', message: 'Danh sách sổ tiết kiệm đã được xuất ra file Excel.' });
     } catch (error) {
       console.error("Export error:", error);
-      toast.error("Có lỗi xảy ra khi xuất file Excel.");
+      showAlert({ type: 'error', title: 'Lỗi xuất file', message: 'Có lỗi xảy ra khi xuất file Excel. Vui lòng thử lại!' });
     }
   };
 
@@ -278,10 +279,10 @@ export default function Passbooks() {
       }
       if (type === 'DEPOSIT') {
         await soTietKiemApi.guiThemTien(so.id, val);
-        toast.success('Gửi thêm tiền thành công!');
+        showAlert({ type: 'success', title: 'Gửi tiền thành công!', message: `Đã gửi thêm ${new Intl.NumberFormat('vi-VN').format(val)} ₫ vào sổ #${so.maSo.slice(-6)}.` });
       } else {
         await soTietKiemApi.rutTien(so.id, val);
-        toast.success('Rút tiền / Tất toán thành công!');
+        showAlert({ type: 'success', title: 'Rút tiền thành công!', message: `Đã rút ${new Intl.NumberFormat('vi-VN').format(val)} ₫ từ sổ #${so.maSo.slice(-6)}.` });
       }
       closeActionModal();
       fetchDanhSach(); // Cập nhật lại danh sách sau khi giao dịch
@@ -673,6 +674,7 @@ export default function Passbooks() {
       )}
         </>
       )}
+      <AlertModal {...alertProps} />
     </div>
   );
 }

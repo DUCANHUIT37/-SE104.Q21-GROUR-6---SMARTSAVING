@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import toast from 'react-hot-toast';
 import { Settings as SettingsIcon, Save, Loader2, Plus } from 'lucide-react';
 import { thamSoApi, loaiTietKiemApi } from '../../services/api';
 import { cn } from '../../lib/utils';
+import AlertModal, { useAlert } from '../../components/AlertModal';
 
 export default function Settings() {
+  const { alertProps, showAlert } = useAlert();
   const [thamSo, setThamSo] = useState({});
   const [laiSuat, setLaiSuat] = useState([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   const [newTerm, setNewTerm] = useState({ tenLoai: '', kyHanThang: '', laiSuatNam: '' });
   const [addingTerm, setAddingTerm] = useState(false);
 
@@ -23,7 +24,7 @@ export default function Settings() {
         thamSoApi.layTatCa(),
         loaiTietKiemApi.layTatCa()
       ]);
-      
+
       const tsObj = {};
       tsRes.data.data.forEach(item => {
         tsObj[item.khoa] = item.giaTri;
@@ -31,7 +32,7 @@ export default function Settings() {
       setThamSo(tsObj);
       setLaiSuat(lsRes.data.data);
     } catch (error) {
-      toast.error('Không thể tải cấu hình từ máy chủ');
+      showAlert({ type: 'error', title: 'Lỗi tải cấu hình', message: 'Không thể tải cấu hình từ máy chủ. Vui lòng thử lại!' });
     } finally {
       setLoading(false);
     }
@@ -41,9 +42,9 @@ export default function Settings() {
     try {
       await loaiTietKiemApi.toggleTrangThai(id);
       setLaiSuat(prev => prev.map(lt => lt.id === id ? { ...lt, dangApDung: !lt.dangApDung } : lt));
-      toast.success('Đã thay đổi trạng thái kỳ hạn');
+      showAlert({ type: 'success', title: 'Cập nhật thành công', message: 'Đã thay đổi trạng thái kỳ hạn.' });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Lỗi khi đổi trạng thái');
+      showAlert({ type: 'error', title: 'Lỗi cập nhật', message: error.response?.data?.message || 'Không thể đổi trạng thái kỳ hạn.' });
     }
   };
 
@@ -53,15 +54,15 @@ export default function Settings() {
     try {
       await loaiTietKiemApi.capNhatLaiSuat(id, ratePercent / 100);
       setLaiSuat(prev => prev.map(lt => lt.id === id ? { ...lt, laiSuatNam: ratePercent / 100 } : lt));
-      toast.success('Đã cập nhật lãi suất');
+      showAlert({ type: 'success', title: 'Cập nhật lãi suất', message: 'Đã cập nhật lãi suất thành công.' });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Lỗi khi cập nhật lãi suất');
+      showAlert({ type: 'error', title: 'Lỗi cập nhật', message: error.response?.data?.message || 'Không thể cập nhật lãi suất.' });
     }
   };
 
   const handleAddTerm = async () => {
     if (!newTerm.tenLoai || !newTerm.kyHanThang || !newTerm.laiSuatNam) {
-      toast.error('Vui lòng điền đầy đủ thông tin kỳ hạn mới');
+      showAlert({ type: 'warning', title: 'Thiếu thông tin', message: 'Vui lòng điền đầy đủ thông tin kỳ hạn mới trước khi thêm.' });
       return;
     }
     setAddingTerm(true);
@@ -74,17 +75,16 @@ export default function Settings() {
         soTienGuiToiThieu: Number(thamSo.so_tien_gui_toi_thieu) || 1000000
       };
       await loaiTietKiemApi.taoMoi(payload);
-      toast.success('Thêm kỳ hạn mới thành công');
+      showAlert({ type: 'success', title: 'Thêm kỳ hạn thành công', message: `Kỳ hạn "${newTerm.tenLoai}" đã được thêm vào hệ thống.` });
       setNewTerm({ tenLoai: '', kyHanThang: '', laiSuatNam: '' });
-      fetchSettings(); // Refresh list
+      fetchSettings();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Lỗi khi thêm kỳ hạn mới');
+      showAlert({ type: 'error', title: 'Lỗi thêm kỳ hạn', message: error.response?.data?.message || 'Không thể thêm kỳ hạn mới.' });
     } finally {
       setAddingTerm(false);
     }
   };
 
-  // WARN-04 FIX: Implement real save using thamSoApi.capNhat
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -97,9 +97,9 @@ export default function Settings() {
       await Promise.all(
         updates.map(u => thamSoApi.capNhat(u.khoa, u.value))
       );
-      toast.success('Đã lưu cài đặt thành công!');
+      showAlert({ type: 'success', title: 'Lưu cài đặt thành công', message: 'Tất cả tham số hệ thống đã được lưu thành công.' });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Lỗi khi lưu tham số');
+      showAlert({ type: 'error', title: 'Lỗi lưu cài đặt', message: error.response?.data?.message || 'Không thể lưu tham số. Vui lòng thử lại!' });
     } finally {
       setSaving(false);
     }
@@ -126,11 +126,10 @@ export default function Settings() {
           <div className="p-2 bg-emerald-500/10 rounded-xl"><SettingsIcon className="w-5 h-5 text-emerald-400" /></div>
           <h3 className="font-bold text-gray-900 dark:text-white">Tham Số Giao Dịch</h3>
         </div>
-        {/* WARN-04 FIX: Use actual DB key names (snake_case) matching API response */}
         <SField label="Tiền gời tối thiểu khi mở sổ (₫)" value={thamSo.so_tien_gui_toi_thieu} onChange={v => setThamSo(t => ({ ...t, so_tien_gui_toi_thieu: v }))} />
         <SField label="Tiền gời thêm tối thiểu (₫)" value={thamSo.so_tien_gui_them_toi_thieu} onChange={v => setThamSo(t => ({ ...t, so_tien_gui_them_toi_thieu: v }))} />
         <SField label="Số ngày gời tối thiểu trước khi rút (KKH)" value={thamSo.thoi_gian_gui_toi_thieu_ngay} onChange={v => setThamSo(t => ({ ...t, thoi_gian_gui_toi_thieu_ngay: v }))} suffix="ngày" step={1} />
-        
+
         <div className="flex justify-end mt-4">
           <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white rounded-lg font-semibold transition-colors text-sm">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -142,26 +141,25 @@ export default function Settings() {
       {/* Danh Sách Kỳ Hạn & Lãi Suất */}
       <div className="bg-white dark:bg-[#1f2937] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
         <h3 className="font-bold text-gray-900 dark:text-white mb-6 text-lg">Danh Sách Kỳ Hạn & Lãi Suất</h3>
-        
+
         <div className="space-y-4">
           {laiSuat.map((lt) => {
             const displayRate = parseFloat((lt.laiSuatNam * 100).toFixed(3));
             return (
               <div key={lt.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#111827]/50">
                 <div className="flex items-center gap-4">
-                  {/* Toggle Switch */}
-                  <button 
+                  <button
                     onClick={() => handleToggle(lt.id)}
                     className={cn(
                       "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
                       lt.dangApDung ? "bg-emerald-500" : "bg-gray-400 dark:bg-gray-600"
                     )}
                   >
-                    <span 
+                    <span
                       className={cn(
                         "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
                         lt.dangApDung ? "translate-x-5" : "translate-x-0"
-                      )} 
+                      )}
                     />
                   </button>
                   <span className={cn("font-semibold", lt.dangApDung ? "text-gray-900 dark:text-white" : "text-gray-400 dark:text-gray-500")}>
@@ -176,7 +174,7 @@ export default function Settings() {
 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   <span className="text-sm text-gray-500 dark:text-gray-400">Lãi suất:</span>
-                  <input 
+                  <input
                     type="number" step="0.01" min="0"
                     disabled={!lt.dangApDung}
                     defaultValue={displayRate}
@@ -204,15 +202,15 @@ export default function Settings() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Tên loại (VD: Kỳ hạn 15 tháng)</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={newTerm.tenLoai} onChange={e => setNewTerm({...newTerm, tenLoai: e.target.value})}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1f2937] text-gray-900 dark:text-white outline-none focus:border-emerald-500"
             />
           </div>
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Số tháng</label>
-            <input 
+            <input
               type="number" min="0"
               value={newTerm.kyHanThang} onChange={e => setNewTerm({...newTerm, kyHanThang: e.target.value})}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1f2937] text-gray-900 dark:text-white outline-none focus:border-emerald-500"
@@ -220,20 +218,22 @@ export default function Settings() {
           </div>
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Lãi suất (%/năm)</label>
-            <input 
+            <input
               type="number" step="0.01" min="0"
               value={newTerm.laiSuatNam} onChange={e => setNewTerm({...newTerm, laiSuatNam: e.target.value})}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1f2937] text-gray-900 dark:text-white outline-none focus:border-emerald-500"
             />
           </div>
         </div>
-        <button 
+        <button
           onClick={handleAddTerm} disabled={addingTerm}
           className="w-full py-2.5 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
         >
           {addingTerm ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Thêm Mới'}
         </button>
       </div>
+
+      <AlertModal {...alertProps} />
     </div>
   );
 }
