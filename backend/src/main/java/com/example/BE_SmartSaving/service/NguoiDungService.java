@@ -176,6 +176,21 @@ public class NguoiDungService {
     }
 
     @org.springframework.transaction.annotation.Transactional
+    public NguoiDungDTO toggleKichHoat(Integer id) {
+        TaiKhoan taiKhoan = taiKhoanRepository.findByNguoiDungId(id)
+                .orElseThrow(() -> new RuntimeException("Người dùng này chưa có tài khoản đăng nhập!"));
+
+        if (taiKhoan.getQuyenHan() == TaiKhoan.QuyenHanEnum.quan_tri_vien || taiKhoan.getQuyenHan() == TaiKhoan.QuyenHanEnum.giam_doc) {
+            throw new RuntimeException("Không thể khoá tài khoản Quản Trị Viên hoặc Giám Đốc!");
+        }
+
+        taiKhoan.setKichHoat(!taiKhoan.getKichHoat());
+        taiKhoanRepository.save(taiKhoan);
+
+        return toDTO(taiKhoan.getNguoiDung());
+    }
+
+    @org.springframework.transaction.annotation.Transactional
     public NguoiDungDTO thangCapThanhGiaoDichVien(Integer id) {
         NguoiDung nguoiDung = layEntityTheoId(id);
         if (nguoiDung.getLoaiNguoiDung() == NguoiDung.LoaiNguoiDungEnum.giao_dich_vien) {

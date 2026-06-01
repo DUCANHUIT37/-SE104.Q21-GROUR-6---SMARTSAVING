@@ -41,7 +41,7 @@ export default function Users() {
 
   const handleToggle = async (u) => {
     try {
-      await nguoiDungApi.capNhat(u.id, { ...u, kichHoat: !u.kichHoat });
+      await nguoiDungApi.toggleKichHoat(u.id);
       setUsers(prev => prev.map(x => x.id === u.id ? { ...x, kichHoat: !x.kichHoat } : x));
       showAlert({
         type: 'success',
