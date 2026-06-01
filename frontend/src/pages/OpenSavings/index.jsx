@@ -60,7 +60,7 @@ export default function MoSo() {
   }, []);
 
   const loaiDaChon = loaiDangApDung.find(lt => lt.id === Number(form.loaiTietKiemId));
-  const laiSuatUocTinh = loaiDaChon ? (loaiDaChon.laiSuatNam * 100) : 0; // Convert to % if backend returns 0.05
+  const laiSuatUocTinh = loaiDaChon ? parseFloat((loaiDaChon.laiSuatNam * 100).toFixed(3)) : 0; // Convert to % if backend returns 0.05
 
   const handleCmndBlur = async () => {
     if (!form.cmnd.trim()) return;
