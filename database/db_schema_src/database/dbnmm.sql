@@ -221,11 +221,11 @@ CREATE TABLE LichSuGiaoDich (
 
 
 -- ============================================================
--- 8. QUY_DINH
+-- 8. THAM_SO
 --    Tham số hệ thống dạng key-value theo QĐ6
 --    Backend đọc từ đây thay vì hardcode trong code
 -- ============================================================
-CREATE TABLE QuyDinh (
+CREATE TABLE ThamSo (
     id                INT             NOT NULL AUTO_INCREMENT,
     khoa              VARCHAR(100)    NOT NULL,
     gia_tri           VARCHAR(255)    NOT NULL,
@@ -241,20 +241,20 @@ CREATE TABLE QuyDinh (
                         ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
-    UNIQUE KEY uq_quydinh_khoa (khoa),
-    CONSTRAINT fk_quydinh_capnhatboi
+    UNIQUE KEY uq_thamso_khoa (khoa),
+    CONSTRAINT fk_thamso_capnhatboi
         FOREIGN KEY (cap_nhat_boi) REFERENCES NguoiDung(id)
         ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- ============================================================
--- 9. LICH_SU_QUY_DINH
+-- 9. LICH_SU_THAM_SO
 --    Ghi lại mỗi lần admin thay đổi tham số hệ thống (QĐ6)
 -- ============================================================
-CREATE TABLE LichSuQuyDinh (
+CREATE TABLE LichSuThamSo (
     id                INT             NOT NULL AUTO_INCREMENT,
-    quy_dinh_id       INT             NOT NULL,
+    tham_so_id        INT             NOT NULL,
     gia_tri_cu        VARCHAR(255)    NOT NULL,
     gia_tri_moi       VARCHAR(255)    NOT NULL,
     cap_nhat_boi      INT             NULL,
@@ -262,10 +262,10 @@ CREATE TABLE LichSuQuyDinh (
     thoi_gian         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
-    CONSTRAINT fk_lsqd_quydinh
-        FOREIGN KEY (quy_dinh_id) REFERENCES QuyDinh(id)
+    CONSTRAINT fk_lsts_thamso
+        FOREIGN KEY (tham_so_id) REFERENCES ThamSo(id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_lsqd_capnhatboi
+    CONSTRAINT fk_lsts_capnhatboi
         FOREIGN KEY (cap_nhat_boi) REFERENCES NguoiDung(id)
         ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -283,7 +283,7 @@ INSERT INTO LoaiTietKiem (ten_loai, ky_han_thang, lai_suat_nam, so_tien_gui_toi_
 ('Kỳ hạn 12 tháng',12, 0.0700, 1000000, 1);
 
 -- Quy định hệ thống (theo QĐ1, QĐ2, QĐ3, QĐ6)
-INSERT INTO QuyDinh (khoa, gia_tri, kieu_du_lieu, mo_ta) VALUES
+INSERT INTO ThamSo (khoa, gia_tri, kieu_du_lieu, mo_ta) VALUES
 ('so_tien_gui_toi_thieu',      '1000000', 'integer', 'Số tiền gửi ban đầu tối thiểu khi mở sổ (đồng) - QĐ1'),
 ('so_tien_gui_them_toi_thieu', '100000',  'integer', 'Số tiền gửi thêm tối thiểu mỗi lần - QĐ2'),
 ('thoi_gian_gui_toi_thieu_ngay','15',     'integer', 'Số ngày gửi tối thiểu trước khi được rút (không kỳ hạn) - QĐ3');
