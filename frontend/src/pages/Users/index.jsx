@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, CheckCircle, XCircle, Shield, Loader2 } from 'lucide-react';
+import { UserPlus, CheckCircle, XCircle, Shield, Loader2, X } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import { nguoiDungApi } from '../../services/api';
 import { cn } from '../../lib/utils';
 import AlertModal, { useAlert } from '../../components/AlertModal';
@@ -22,6 +23,8 @@ export default function Users() {
   const [form, setForm] = useState({ hoTen: '', cmnd: '', soDienThoai: '', diaChi: '', loaiNguoiDung: 'nhan_vien', email: '', matKhau: '' });
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const { user: currentUser } = useAuth();
 
   useEffect(() => {
     fetchUsers();
@@ -213,7 +216,7 @@ export default function Users() {
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-gray-800/60">
             {users.map(u => (
-              <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">
+              <tr key={u.id} onClick={() => currentUser?.quyenHan === 'ROLE_quan_tri_vien' ? setSelectedUser(u) : null} className={cn("transition-colors", currentUser?.quyenHan === 'ROLE_quan_tri_vien' ? "cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02]" : "")}>
                 <td className="px-4 py-3.5">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-bold text-sm">
@@ -237,25 +240,25 @@ export default function Users() {
                 <td className="px-4 py-3.5">
                   <div className="flex items-center gap-2">
                     {u.quyenHan !== 'ADMIN' && (
-                      <button onClick={() => handleToggle(u)}
+                      <button onClick={(e) => { e.stopPropagation(); handleToggle(u); }}
                         className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors', u.kichHoat ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400')}>
                         {u.kichHoat ? 'Khóa' : 'Kích hoạt'}
                       </button>
                     )}
                     {u.quyenHan === 'USER' && (
-                      <button onClick={() => handlePromote(u)}
+                      <button onClick={(e) => { e.stopPropagation(); handlePromote(u); }}
                         className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-xs font-semibold transition-colors">
                         Nâng quyền Teller
                       </button>
                     )}
                     {u.quyenHan === 'TELLER' && (
-                      <button onClick={() => handleDemote(u)}
+                      <button onClick={(e) => { e.stopPropagation(); handleDemote(u); }}
                         className="px-3 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 rounded-lg text-xs font-semibold transition-colors">
                         Hạ quyền User
                       </button>
                     )}
                     {u.quyenHan !== 'ADMIN' && (
-                      <button onClick={() => handleXoa(u)}
+                      <button onClick={(e) => { e.stopPropagation(); handleXoa(u); }}
                         className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg text-xs font-semibold transition-colors ml-1">
                         Xóa
                       </button>
@@ -269,6 +272,73 @@ export default function Users() {
       </div>
 
       <AlertModal {...alertProps} />
+
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedUser(null)}>
+          <div className="bg-white dark:bg-[#1f2937] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white">Chi tiết Người Dùng</h3>
+              <button onClick={() => setSelectedUser(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl text-gray-500 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-bold text-2xl">
+                  {selectedUser.hoTen?.charAt(0)?.toUpperCase()}
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-white">{selectedUser.hoTen}</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email || 'Chưa cập nhật email'}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 mb-1">ID</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{selectedUser.id}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 mb-1">CMND/CCCD</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{selectedUser.cmnd || 'Chưa cập nhật'}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 mb-1">Số điện thoại</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{selectedUser.soDienThoai || 'Chưa cập nhật'}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 mb-1">Vai trò</p>
+                  <span className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold', ROLE_COLOR[selectedUser.quyenHan])}>
+                    <Shield className="w-3 h-3" />{ROLE_LABEL[selectedUser.quyenHan]}
+                  </span>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-gray-500 dark:text-gray-400 mb-1">Địa chỉ</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{selectedUser.diaChi || 'Chưa cập nhật'}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 mb-1">Trạng thái</p>
+                  <span className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold', selectedUser.kichHoat ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gray-500/10 text-gray-400')}>
+                    {selectedUser.kichHoat ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                    {selectedUser.kichHoat ? 'Đang hoạt động' : 'Đã khóa'}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400 mb-1">Ngày tạo</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">
+                    {selectedUser.taoLuc ? new Date(selectedUser.taoLuc).toLocaleString('vi-VN') : 'Không rõ'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-gray-800 flex justify-end">
+              <button onClick={() => setSelectedUser(null)} className="px-4 py-2 bg-white dark:bg-[#1f2937] border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm transition-colors">
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

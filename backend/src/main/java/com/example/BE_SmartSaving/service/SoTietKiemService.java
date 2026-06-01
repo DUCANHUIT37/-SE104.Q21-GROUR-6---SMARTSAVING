@@ -111,6 +111,16 @@ public class SoTietKiemService {
             khachHang.setSoDienThoai(soTietKiem.getKhachHang().getSoDienThoai());
             khachHang.setLoaiNguoiDung(NguoiDung.LoaiNguoiDungEnum.khach_hang);
             khachHang = nguoiDungRepository.save(khachHang);
+        } else {
+            // Cập nhật địa chỉ nếu khách hàng chưa có và có gửi kèm địa chỉ mới
+            String diaChiMoi = soTietKiem.getKhachHang().getDiaChi();
+            if (diaChiMoi != null && !diaChiMoi.trim().isEmpty() && !diaChiMoi.equals("Chưa cập nhật")) {
+                String diaChiCu = khachHang.getDiaChi();
+                if (diaChiCu == null || diaChiCu.trim().isEmpty() || diaChiCu.equals("Chưa cập nhật")) {
+                    khachHang.setDiaChi(diaChiMoi.trim());
+                    khachHang = nguoiDungRepository.save(khachHang);
+                }
+            }
         }
         
         soTietKiem.setKhachHang(khachHang);
