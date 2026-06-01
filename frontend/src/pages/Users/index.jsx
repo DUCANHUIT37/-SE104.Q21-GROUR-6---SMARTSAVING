@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { UserPlus, CheckCircle, XCircle, Shield, Loader2 } from 'lucide-react';
 import { nguoiDungApi } from '../../services/api';
 import { cn } from '../../lib/utils';
@@ -57,7 +57,7 @@ export default function Users() {
     showAlert({
       type: 'warning',
       title: 'Xác nhận xóa tài khoản',
-      message: "Bạn có chắc chắn muốn xóa tài khoản của "$"{"u.hoTen"}""? Hành động này không thể hoàn tác và chỉ thực hiện được nếu người dùng chưa có dữ liệu giao dịch.",
+      message: `Bạn có chắc chắn muốn xóa tài khoản của "${u.hoTen}"? Hành động này không thể hoàn tác và chỉ thực hiện được nếu người dùng chưa có dữ liệu giao dịch.`,
       confirmLabel: 'Xóa ngay',
       cancelLabel: 'Hủy',
       onConfirm: async () => {
