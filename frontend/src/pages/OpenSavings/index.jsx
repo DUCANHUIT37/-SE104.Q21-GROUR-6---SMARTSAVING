@@ -265,10 +265,7 @@ export default function MoSo() {
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Họ và tên khách hàng</label>
                   <input type="text" name="hoTen" required value={form.hoTen} onChange={handleChange} disabled={isStaff || !!khachHangTimThay} className={cn("w-full px-4 py-2 border rounded-lg outline-none transition focus:ring-2 focus:ring-emerald-500", (isStaff || khachHangTimThay) ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-70 text-gray-700 dark:text-gray-400 border-transparent" : "border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white")} placeholder={isStaff ? "" : "VD: NGUYEN VAN A"} />
                 </div>
-                <div className="sm:col-span-2 space-y-2">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Địa chỉ hiện tại</label>
-                  <input type="text" name="diaChi" required value={form.diaChi} onChange={handleChange} disabled={isStaff || !!(khachHangTimThay && khachHangTimThay.diaChi && khachHangTimThay.diaChi !== "Chưa cập nhật")} className={cn("w-full px-4 py-2 border rounded-lg outline-none transition focus:ring-2 focus:ring-emerald-500", (isStaff || (khachHangTimThay && khachHangTimThay.diaChi && khachHangTimThay.diaChi !== "Chưa cập nhật")) ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed opacity-70 text-gray-700 dark:text-gray-400 border-transparent" : "border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white")} placeholder={isStaff ? "" : "VD: Số 123, Phường A, Quận B"} />
-                </div>
+
               </div>
             </div>
 

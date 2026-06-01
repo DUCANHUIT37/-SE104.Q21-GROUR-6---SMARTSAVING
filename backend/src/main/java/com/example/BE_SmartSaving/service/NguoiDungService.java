@@ -240,6 +240,7 @@ public class NguoiDungService {
         try {
             taiKhoanRepository.findByNguoiDungId(id).ifPresent(taiKhoanRepository::delete);
             nguoiDungRepository.delete(nguoiDung);
+            nguoiDungRepository.flush();
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             throw new RuntimeException("Không thể xoá! Người dùng này đã có dữ liệu sổ tiết kiệm hoặc giao dịch trong hệ thống.");
         }
