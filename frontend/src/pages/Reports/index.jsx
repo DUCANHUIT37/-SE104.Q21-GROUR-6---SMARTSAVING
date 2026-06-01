@@ -23,7 +23,7 @@ const getYearMonth = (offset = 0) => {
   return { nam: d.getFullYear(), thang: d.getMonth() + 1 };
 };
 
-export default function FinancialReport() {
+function FinancialReport() {
   const [activeTab, setActiveTab] = useState('Hôm nay');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -111,6 +111,11 @@ export default function FinancialReport() {
     fetchReport(activeTab);
   }, [activeTab, fetchReport]);
 
+  // Item 4.1: Filter thangData by loai if selected
+  const filteredThangData = loaiFilter === 'ALL'
+    ? thangData
+    : thangData?.filter(r => r?.tenLoaiTietKiem === loaiFilter);
+
   // ─── Chart data ───────────────────────────────────────────────────────────
   const chartData = isNgayTab
     // Daily: one bar per savings type
@@ -182,13 +187,9 @@ export default function FinancialReport() {
     }
   ];
 
-  // Item 4.1: Filter thangData by loai if selected
-  const filteredThangData = loaiFilter === 'ALL'
-    ? thangData
-    : thangData?.filter(r => r?.tenLoaiTietKiem === loaiFilter);
-
-  return (
-    <div className="space-y-6">
+  try {
+    return (
+      <div className="space-y-6">
 
       {/* HEADER SECTION & CONTROLS */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -451,6 +452,48 @@ export default function FinancialReport() {
           )}
         </>
       )}
+
     </div>
+  );
+  } catch (err) {
+    return (
+      <div className="p-8 bg-red-50 text-red-600 rounded-2xl border border-red-200">
+        <h2 className="text-2xl font-bold mb-4">CRASH DETECTED IN REACT RENDER:</h2>
+        <pre className="whitespace-pre-wrap">{err.toString()}\n{err.stack}</pre>
+      </div>
+    );
+  }
+}
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 bg-red-50 text-red-600 rounded-2xl border border-red-200 m-8 shadow-sm">
+          <h2 className="text-2xl font-bold mb-4">CRASH DETECTED IN REACT RECONCILIATION:</h2>
+          <p className="font-semibold mb-2">{this.state.error && this.state.error.toString()}</p>
+          <pre className="whitespace-pre-wrap text-sm bg-white p-4 rounded-lg mt-4 shadow-inner">{this.state.errorInfo && this.state.errorInfo.componentStack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function FinancialReportWithErrorBoundary(props) {
+  return (
+    <ErrorBoundary>
+      <FinancialReport {...props} />
+    </ErrorBoundary>
   );
 }
