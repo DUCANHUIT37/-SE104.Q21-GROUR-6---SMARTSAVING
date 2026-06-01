@@ -37,6 +37,9 @@ public class SoTietKiemDTO {
     @JsonProperty("khachHangCmnd")
     private String khachHangCmnd;
 
+    @JsonProperty("khachHangDiaChi")
+    private String khachHangDiaChi;
+
     @JsonProperty("loaiTietKiemId")
     private Integer loaiTietKiemId;
 

@@ -28,7 +28,7 @@ public class SecurityConfig {
             .cors().and()
             .csrf().disable()
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/baocao/**").permitAll()
                         .requestMatchers("/api/cleanup-garbage-users").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

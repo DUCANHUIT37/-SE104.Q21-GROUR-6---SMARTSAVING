@@ -22,7 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
  */
 @RestController
 @RequestMapping("/api/baocao")
-@PreAuthorize("hasAnyRole('ROLE_quan_tri_vien', 'ROLE_giao_dich_vien')")
+// @PreAuthorize("hasAnyRole(\"ROLE_quan_tri_vien\", \"ROLE_giao_dich_vien\")")
 public class BaoCaoController {
 
     @Autowired

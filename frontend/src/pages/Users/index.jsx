@@ -275,25 +275,25 @@ export default function Users() {
                   <div className="flex items-center gap-2">
                     {u.quyenHan !== 'ADMIN' && (
                       <button onClick={(e) => { e.stopPropagation(); handleToggle(u); }}
-                        className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors', u.kichHoat ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400')}>
+                        className={cn('w-[85px] text-center px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors', u.kichHoat ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400')}>
                         {u.kichHoat ? 'Khóa' : 'Kích hoạt'}
                       </button>
                     )}
                     {u.quyenHan === 'USER' && (
                       <button onClick={(e) => { e.stopPropagation(); handlePromote(u); }}
-                        className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-xs font-semibold transition-colors">
+                        className="w-[135px] text-center px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-xs font-semibold transition-colors">
                         Nâng quyền Teller
                       </button>
                     )}
                     {u.quyenHan === 'TELLER' && (
                       <button onClick={(e) => { e.stopPropagation(); handleDemote(u); }}
-                        className="px-3 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 rounded-lg text-xs font-semibold transition-colors">
+                        className="w-[135px] text-center px-3 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 rounded-lg text-xs font-semibold transition-colors">
                         Hạ quyền User
                       </button>
                     )}
                     {u.quyenHan !== 'ADMIN' && (
                       <button onClick={(e) => { e.stopPropagation(); handleXoa(u); }}
-                        className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg text-xs font-semibold transition-colors ml-1">
+                        className="w-[60px] text-center px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg text-xs font-semibold transition-colors">
                         Xóa
                       </button>
                     )}

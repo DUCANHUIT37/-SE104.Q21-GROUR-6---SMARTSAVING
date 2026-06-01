@@ -11,6 +11,7 @@ import { Calculator } from 'lucide-react';
 // Removed fakeDb imports as they are no longer needed for mock transactions
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import Bm1Modal from '../../components/modals/Bm1Modal';
 
 const formatTien = (val) => new Intl.NumberFormat('vi-VN').format(val ?? 0) + ' ₫';
 const formatNgay = (str) => str ? new Date(str).toLocaleDateString('vi-VN') : '—';
@@ -33,6 +34,7 @@ const mapDtoToUi = (dto) => ({
   loaiTietKiemId: dto.loaiTietKiemId,
   loaiTietKiemTen: dto.loaiTietKiemTen,
   kyHanThang: dto.kyHanThang ?? 0,
+  khachHangDiaChi: dto.khachHangDiaChi,
 });
 
 export default function Passbooks() {
@@ -62,6 +64,9 @@ export default function Passbooks() {
   const [actionError, setActionError] = useState('');
   // Item 7.1: Real-time withdrawal calculation state
   const [rutTienCalc, setRutTienCalc] = useState(null); // null=idle, {loading}=fetching, {...data}=done
+
+  // BM1 Modal State
+  const [bm1Modal, setBm1Modal] = useState({ isOpen: false, passbook: null, loading: false });
 
   // ─── Fetch dữ liệu từ Backend ─────────────────────────────────────────────────
   const fetchDanhSach = useCallback(async () => {
@@ -261,6 +266,18 @@ export default function Passbooks() {
     setRutTienCalc(null);
   };
 
+  const handleRowDoubleClick = async (id) => {
+    setBm1Modal({ isOpen: true, passbook: null, loading: true });
+    try {
+      const response = await soTietKiemApi.layTheoId(id);
+      setBm1Modal({ isOpen: true, passbook: response.data.data, loading: false });
+    } catch (err) {
+      console.error(err);
+      setBm1Modal({ isOpen: false, passbook: null, loading: false });
+      showAlert({ type: 'error', title: 'Lỗi', message: 'Không thể tải thông tin sổ.' });
+    }
+  };
+
   const handleTransaction = async (e) => {
     e.preventDefault();
     const { so, type } = actionModal;
@@ -401,7 +418,11 @@ export default function Passbooks() {
                 pagedData.map((s, index) => {
                   const isActive = s.trangThai === 'dang_hoat_dong';
                   return (
-                    <tr key={s.id} className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                    <tr 
+                      key={s.id} 
+                      onDoubleClick={() => handleRowDoubleClick(s.id)}
+                      className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer"
+                    >
                       <td className="px-4 py-4 text-gray-500 dark:text-gray-400 font-medium">
                         {index + 1}
                       </td>
@@ -675,6 +696,19 @@ export default function Passbooks() {
         </>
       )}
       <AlertModal {...alertProps} />
+      
+      {/* BM1 Modal Overlay */}
+      {bm1Modal.loading ? (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
+        </div>
+      ) : (
+        <Bm1Modal 
+          isOpen={bm1Modal.isOpen} 
+          onClose={() => setBm1Modal(prev => ({...prev, isOpen: false}))} 
+          passbook={bm1Modal.passbook} 
+        />
+      )}
     </div>
   );
 }

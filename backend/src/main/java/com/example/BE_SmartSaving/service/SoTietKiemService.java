@@ -46,6 +46,7 @@ public class SoTietKiemService {
                 .khachHangId(stk.getKhachHang() != null ? stk.getKhachHang().getId() : null)
                 .khachHangTen(stk.getKhachHang() != null ? stk.getKhachHang().getHoTen() : null)
                 .khachHangCmnd(stk.getKhachHang() != null ? stk.getKhachHang().getCmnd() : null)
+                .khachHangDiaChi(stk.getKhachHang() != null ? stk.getKhachHang().getDiaChi() : null)
                 // Flatten ManyToOne: loaiTietKiem
                 .loaiTietKiemId(stk.getLoaiTietKiem() != null ? stk.getLoaiTietKiem().getId() : null)
                 .loaiTietKiemTen(stk.getLoaiTietKiem() != null ? stk.getLoaiTietKiem().getTenLoai() : null)
