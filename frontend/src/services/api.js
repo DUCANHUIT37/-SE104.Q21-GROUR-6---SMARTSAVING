@@ -117,6 +117,8 @@ export const nguoiDungApi = {
     api.put(`/nguoidung/${id}/demote-to-user`),
   toggleKichHoat: (id) =>
     api.put(`/nguoidung/${id}/toggle-status`),
+  xoa: (id) =>
+    api.delete(`/nguoidung/${id}`),
 };
 
 // ─── Báo Cáo API ──────────────────────────────────────────────────────────────
