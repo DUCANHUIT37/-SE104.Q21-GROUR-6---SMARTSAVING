@@ -107,6 +107,14 @@ public class NguoiDungService {
         return nguoiDungRepository.findAll()
                 .stream()
                 .map(this::toDTO)
+                .sorted((a, b) -> {
+                    int rankA = "ADMIN".equals(a.getQuyenHan()) ? 1 : "TELLER".equals(a.getQuyenHan()) ? 2 : 3;
+                    int rankB = "ADMIN".equals(b.getQuyenHan()) ? 1 : "TELLER".equals(b.getQuyenHan()) ? 2 : 3;
+                    if (rankA != rankB) return Integer.compare(rankA, rankB);
+                    String nameA = a.getHoTen() != null ? a.getHoTen() : "";
+                    String nameB = b.getHoTen() != null ? b.getHoTen() : "";
+                    return nameA.compareToIgnoreCase(nameB);
+                })
                 .collect(Collectors.toList());
     }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, CheckCircle, XCircle, Shield, Loader2, X, Edit2, Save } from 'lucide-react';
+import { UserPlus, CheckCircle, XCircle, Shield, Loader2, X, Edit2, Save, Search } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { nguoiDungApi } from '../../services/api';
 import { cn } from '../../lib/utils';
@@ -27,6 +27,7 @@ export default function Users() {
   const [isEditingUser, setIsEditingUser] = useState(false);
   const [editUserForm, setEditUserForm] = useState({});
   const [updatingUser, setUpdatingUser] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { user: currentUser } = useAuth();
 
   const handleOpenEdit = () => {
@@ -239,6 +240,17 @@ export default function Users() {
         </form>
       )}
 
+      <div className="relative w-full max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Tìm kiếm theo họ tên, email hoặc vai trò..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-slate-900/50 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition"
+        />
+      </div>
+
       <div className="bg-white dark:bg-[#1f2937] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -249,7 +261,18 @@ export default function Users() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-gray-800/60">
-            {users.map(u => (
+            {users.filter(u => {
+              const q = searchQuery.toLowerCase();
+              return (u.hoTen || '').toLowerCase().includes(q) ||
+                     (u.email || '').toLowerCase().includes(q) ||
+                     (ROLE_LABEL[u.quyenHan] || '').toLowerCase().includes(q);
+            }).sort((a, b) => {
+              const rank = { 'ADMIN': 1, 'TELLER': 2, 'USER': 3 };
+              const rA = rank[a.quyenHan] || 4;
+              const rB = rank[b.quyenHan] || 4;
+              if (rA !== rB) return rA - rB;
+              return (a.hoTen || '').localeCompare(b.hoTen || '');
+            }).map(u => (
               <tr key={u.id} onClick={() => currentUser?.quyenHan === 'ROLE_quan_tri_vien' ? setSelectedUser(u) : null} className={cn("transition-colors", currentUser?.quyenHan === 'ROLE_quan_tri_vien' ? "cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02]" : "")}>
                 <td className="px-4 py-3.5">
                   <div className="flex items-center gap-3">
