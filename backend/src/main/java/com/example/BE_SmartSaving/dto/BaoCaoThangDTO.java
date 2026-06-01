@@ -14,9 +14,8 @@ public class BaoCaoThangDTO {
     @JsonProperty("tenLoaiTietKiem")
     private String tenLoaiTietKiem;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     @JsonProperty("ngay")
-    private LocalDate ngay;
+    private String ngay;
 
     @JsonProperty("soSoMo")
     private long soSoMo;

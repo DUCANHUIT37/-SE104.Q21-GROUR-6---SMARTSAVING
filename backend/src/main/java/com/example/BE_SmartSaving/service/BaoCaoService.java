@@ -117,7 +117,7 @@ public class BaoCaoService {
                 if (soSoMo > 0 || soSoDong > 0) {
                     BaoCaoThangDTO dto = new BaoCaoThangDTO();
                     dto.setTenLoaiTietKiem(loai.getTenLoai());
-                    dto.setNgay(ngayHienTai);
+                    dto.setNgay(ngayHienTai.toString());
                     dto.setSoSoMo(soSoMo);
                     dto.setSoSoDong(soSoDong);
                     dto.setChenhLech(soSoMo - soSoDong);
