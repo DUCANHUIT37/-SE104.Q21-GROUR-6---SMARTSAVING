@@ -152,4 +152,16 @@ public class NguoiDungController {
             return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
         }
     }
+
+    /** Xoá tài khoản – chỉ Admin */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_quan_tri_vien')")
+    public ResponseEntity<ApiResponse<?>> xoaTaiKhoan(@PathVariable Integer id) {
+        try {
+            nguoiDungService.xoaTaiKhoan(id);
+            return ResponseEntity.ok(ApiResponse.success(null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, e.getMessage()));
+        }
+    }
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { UserPlus, CheckCircle, XCircle, Shield, Loader2 } from 'lucide-react';
 import { nguoiDungApi } from '../../services/api';
 import { cn } from '../../lib/utils';
@@ -51,6 +51,25 @@ export default function Users() {
     } catch (error) {
       showAlert({ type: 'error', title: 'Lỗi cập nhật', message: error.response?.data?.message || 'Không thể cập nhật trạng thái tài khoản.' });
     }
+  };
+
+  const handleXoa = (u) => {
+    showAlert({
+      type: 'warning',
+      title: 'Xác nhận xóa tài khoản',
+      message: "Bạn có chắc chắn muốn xóa tài khoản của "$"{"u.hoTen"}""? Hành động này không thể hoàn tác và chỉ thực hiện được nếu người dùng chưa có dữ liệu giao dịch.",
+      confirmLabel: 'Xóa ngay',
+      cancelLabel: 'Hủy',
+      onConfirm: async () => {
+        try {
+          await nguoiDungApi.xoa(u.id);
+          setUsers(prev => prev.filter(x => x.id !== u.id));
+          showAlert({ type: 'success', title: 'Xóa thành công', message: 'Tài khoản đã được xóa khỏi hệ thống.' });
+        } catch (error) {
+          showAlert({ type: 'error', title: 'Không thể xóa', message: error.response?.data?.message || 'Có lỗi xảy ra khi xóa tài khoản.' });
+        }
+      }
+    });
   };
 
   const handlePromote = (u) => {
@@ -233,6 +252,12 @@ export default function Users() {
                       <button onClick={() => handleDemote(u)}
                         className="px-3 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 rounded-lg text-xs font-semibold transition-colors">
                         Hạ quyền User
+                      </button>
+                    )}
+                    {u.quyenHan !== 'ADMIN' && (
+                      <button onClick={() => handleXoa(u)}
+                        className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg text-xs font-semibold transition-colors ml-1">
+                        Xóa
                       </button>
                     )}
                   </div>

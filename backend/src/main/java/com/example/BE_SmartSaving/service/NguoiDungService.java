@@ -230,4 +230,18 @@ public class NguoiDungService {
 
         return toDTO(nguoiDung);
     }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void xoaTaiKhoan(Integer id) {
+        NguoiDung nguoiDung = layEntityTheoId(id);
+        if (nguoiDung.getLoaiNguoiDung() == NguoiDung.LoaiNguoiDungEnum.quan_tri_vien || nguoiDung.getLoaiNguoiDung() == NguoiDung.LoaiNguoiDungEnum.giam_doc) {
+            throw new RuntimeException("Không thể xoá tài khoản Quản Trị Viên hoặc Giám Đốc!");
+        }
+        try {
+            taiKhoanRepository.findByNguoiDungId(id).ifPresent(taiKhoanRepository::delete);
+            nguoiDungRepository.delete(nguoiDung);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new RuntimeException("Không thể xoá! Người dùng này đã có dữ liệu sổ tiết kiệm hoặc giao dịch trong hệ thống.");
+        }
+    }
 }
