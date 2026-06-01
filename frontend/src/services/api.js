@@ -1,5 +1,4 @@
 import axios from 'axios';
-import toast from 'react-hot-toast';
 // ─── Axios Instance ────────────────────────────────────────────────────────────
 // Ưu tiên biến môi trường VITE_API_URL (set trên Vercel dashboard)
 // Fallback về localhost:8080 khi chạy local dev
@@ -36,12 +35,12 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('user_info');
-      // Hiển thị thông báo
-      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-      // Điều hướng về trang login sau một khoảng trễ nhỏ
+      // Dispatch custom event để các component có thể lắng nghe nếu cần
+      window.dispatchEvent(new CustomEvent('auth:expired'));
+      // Redirect về login
       setTimeout(() => {
         window.location.href = '/login';
-      }, 1000);
+      }, 500);
     }
     return Promise.reject(error);
   }

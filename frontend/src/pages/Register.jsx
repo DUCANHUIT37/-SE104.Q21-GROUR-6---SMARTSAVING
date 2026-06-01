@@ -78,7 +78,7 @@ export default function Register() {
         matKhau: formData.matKhau
       });
 
-      if (res.data && res.data.success) {
+      if (res.data && res.data.statusCode === 200) {
         showAlert({
           type: 'success',
           title: 'Đăng ký thành công! 🎉',
