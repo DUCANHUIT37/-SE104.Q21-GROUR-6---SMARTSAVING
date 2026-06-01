@@ -93,14 +93,14 @@ public class BaoCaoService {
 
         java.util.Map<String, Long> mapSoMo = new java.util.HashMap<>();
         for (Object[] row : kqSoMo) {
-            String key = row[0] + "_" + row[1].toString();
+            String key = String.valueOf(row[0]) + "_" + String.valueOf(row[1]);
             long count = (row[2] != null) ? ((Number) row[2]).longValue() : 0L;
             mapSoMo.put(key, count);
         }
 
         java.util.Map<String, Long> mapSoDong = new java.util.HashMap<>();
         for (Object[] row : kqSoDong) {
-            String key = row[0] + "_" + row[1].toString();
+            String key = String.valueOf(row[0]) + "_" + String.valueOf(row[1]);
             long count = (row[2] != null) ? ((Number) row[2]).longValue() : 0L;
             mapSoDong.put(key, count);
         }

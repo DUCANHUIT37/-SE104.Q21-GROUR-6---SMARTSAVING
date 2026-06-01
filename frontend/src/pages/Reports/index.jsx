@@ -41,16 +41,16 @@ export default function FinancialReport() {
 
   // ─── Aggregate stats from server response ─────────────────────────────────
   const statsFromNgay = () => {
-    const tongThu = ngayData.reduce((s, r) => s + Number(r.tongThu ?? 0), 0);
-    const tongChi = ngayData.reduce((s, r) => s + Number(r.tongChi ?? 0), 0);
-    return { tongThu, tongChi, chenhLech: tongThu - tongChi, soGiaoDich: ngayData.length };
+    const tongThu = ngayData?.reduce((s, r) => s + Number(r?.tongThu ?? 0), 0) ?? 0;
+    const tongChi = ngayData?.reduce((s, r) => s + Number(r?.tongChi ?? 0), 0) ?? 0;
+    return { tongThu, tongChi, chenhLech: tongThu - tongChi, soGiaoDich: ngayData?.length ?? 0 };
   };
 
   const statsFromThang = () => {
-    const soSoMo  = thangData.reduce((s, r) => s + Number(r.soSoMo  ?? 0), 0);
-    const soSoDong = thangData.reduce((s, r) => s + Number(r.soSoDong ?? 0), 0);
+    const soSoMo  = thangData?.reduce((s, r) => s + Number(r?.soSoMo ?? 0), 0) ?? 0;
+    const soSoDong = thangData?.reduce((s, r) => s + Number(r?.soSoDong ?? 0), 0) ?? 0;
     // Use soSoMo as proxy for tongThu & soSoDong as proxy for tongChi (for display parity)
-    return { tongThu: soSoMo, tongChi: soSoDong, chenhLech: soSoMo - soSoDong, soGiaoDich: thangData.length };
+    return { tongThu: soSoMo, tongChi: soSoDong, chenhLech: soSoMo - soSoDong, soGiaoDich: thangData?.length ?? 0 };
   };
 
   // Items 3.1, 4.1: Helper to get human-readable period label
@@ -185,7 +185,7 @@ export default function FinancialReport() {
   // Item 4.1: Filter thangData by loai if selected
   const filteredThangData = loaiFilter === 'ALL'
     ? thangData
-    : thangData.filter(r => r.tenLoaiTietKiem === loaiFilter);
+    : thangData?.filter(r => r?.tenLoaiTietKiem === loaiFilter);
 
   return (
     <div className="space-y-6">
