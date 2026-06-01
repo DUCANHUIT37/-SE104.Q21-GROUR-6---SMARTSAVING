@@ -211,6 +211,7 @@ export default function MoSo() {
   }
 
   return (
+    <>
     <div className="max-w-5xl mx-auto space-y-8">
       <div>
         <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center">
@@ -404,5 +405,6 @@ export default function MoSo() {
     </div>
 
       <AlertModal {...alertProps} />
+    </>
   );
 }
