@@ -33,6 +33,7 @@ public class DataInitializer implements CommandLineRunner {
         try {
             createTestAccount("teller@smartsaving.vn", "teller123", "Giao Dịch Viên Test", "123456789012", TaiKhoan.QuyenHanEnum.giao_dich_vien);
             createTestAccount("user@smartsaving.vn", "user123", "Khách Hàng Test", "987654321012", TaiKhoan.QuyenHanEnum.khach_hang);
+            createTestAccount("admin@smartsaving.vn", "admin123", "Quản Trị Viên Test", "999999888888", TaiKhoan.QuyenHanEnum.quan_tri_vien);
 
             seedThamSo("so_tien_gui_toi_thieu", "1000000", "Số tiền gửi tối thiểu ban đầu");
             seedThamSo("so_tien_gui_them_toi_thieu", "100000", "Số tiền gửi thêm tối thiểu");
