@@ -16,7 +16,7 @@ CREATE TABLE NguoiDung (
                            cmnd              VARCHAR(20)     NOT NULL,
                            dia_chi           VARCHAR(255)    NOT NULL,
                            so_dien_thoai     VARCHAR(20)     NULL,
-                           loai_nguoi_dung   ENUM('khach_hang', 'giao_dich_vien', 'quan_tri_vien', 'giam_doc') NOT NULL DEFAULT 'khach_hang',
+                           loai_nguoi_dung   ENUM('khach_hang', 'giao_dich_vien', 'quan_tri_vien') NOT NULL DEFAULT 'khach_hang',
                            tao_luc           DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
                            PRIMARY KEY (id),
                            UNIQUE KEY uq_nguoidung_cmnd (cmnd)
@@ -30,7 +30,7 @@ CREATE TABLE TaiKhoan (
                           id                INT             NOT NULL AUTO_INCREMENT,
                           email             VARCHAR(150)    NOT NULL,
                           mat_khau_hash     VARCHAR(255)    NOT NULL,
-                          quyen_han         ENUM('giao_dich_vien', 'quan_tri_vien', 'giam_doc') NOT NULL DEFAULT 'giao_dich_vien',
+                          quyen_han         ENUM('giao_dich_vien', 'quan_tri_vien') NOT NULL DEFAULT 'giao_dich_vien',
                           nguoi_dung_id     INT             NOT NULL,
                           kich_hoat         TINYINT(1)      NOT NULL DEFAULT 1,
                           tao_luc           DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,

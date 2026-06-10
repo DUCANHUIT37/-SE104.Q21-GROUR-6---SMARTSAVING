@@ -23,8 +23,7 @@ CREATE TABLE NguoiDung (
     loai_nguoi_dung   ENUM(
                         'khach_hang',
                         'giao_dich_vien',
-                        'quan_tri_vien',
-                        'giam_doc'
+                        'quan_tri_vien'
                       )               NOT NULL DEFAULT 'khach_hang',
     tao_luc           DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -43,8 +42,7 @@ CREATE TABLE TaiKhoan (
     mat_khau_hash     VARCHAR(255)    NOT NULL,
     quyen_han         ENUM(
                         'giao_dich_vien',
-                        'quan_tri_vien',
-                        'giam_doc'
+                        'quan_tri_vien'
                       )               NOT NULL DEFAULT 'giao_dich_vien',
     nguoi_dung_id     INT             NOT NULL,
     kich_hoat         TINYINT(1)      NOT NULL DEFAULT 1,
